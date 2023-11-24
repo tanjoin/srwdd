@@ -7,7 +7,7 @@ class MechaList {
           hp: 20250,
           atk: 2830,
           def: 2500,
-          sight: 259,
+          sig: 259,
           agi: 304,
           mov: 3,
           spd: 625,
@@ -16,7 +16,7 @@ class MechaList {
         ["攻撃", "回避"],
         { air: "B", grd: "A", wtr: "B", spc: "A" },
         new Weapon("57mm散弾砲ボクサー", "実弾", { min: 1, max: 2 }),
-        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sight: 100 })
+        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sig: 100 })
       ),
       new Mecha(
         "ヴァルヴレイヴⅥ",
@@ -24,7 +24,7 @@ class MechaList {
           hp: 21000,
           atk: 3130,
           def: 2770,
-          sight: 316,
+          sig: 316,
           agi: 253,
           mov: 3,
           spd: 550,
@@ -33,7 +33,7 @@ class MechaList {
         ["バランス"],
         { air: "A", grd: "A", wtr: "B", spc: "A" },
         new Weapon("バリアブル・バルカン", "斬撃", { min: 1, max: 2 }),
-        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sight: 100 })
+        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sig: 100 })
       ),
       new Mecha(
         "ソウルゲイン",
@@ -41,7 +41,7 @@ class MechaList {
           hp: 21750,
           atk: 3190,
           def: 3070,
-          sight: 244,
+          sig: 244,
           agi: 226,
           mov: 3,
           spd: 475,
@@ -58,7 +58,7 @@ class MechaList {
           hp: 22000,
           atk: 2980,
           def: 3070,
-          sight: 310,
+          sig: 310,
           agi: 259,
           mov: 3,
           spd: 625,
@@ -75,7 +75,7 @@ class MechaList {
           hp: 26000,
           atk: 3340,
           def: 3160,
-          sight: 253,
+          sig: 253,
           agi: 232,
           mov: 3,
           spd: 570,
@@ -92,7 +92,7 @@ class MechaList {
           hp: 26000,
           atk: 3190,
           def: 2530,
-          sight: 247,
+          sig: 247,
           agi: 316,
           mov: 4,
           spd: 570,
@@ -104,7 +104,7 @@ class MechaList {
           min: 1,
           max: 2,
         }),
-        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sight: 100 })
+        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sig: 100 })
       ),
       new Mecha(
         "グリッドマン",
@@ -112,7 +112,7 @@ class MechaList {
           hp: 26000,
           atk: 3310,
           def: 3190,
-          sight: 256,
+          sig: 256,
           agi: 229,
           mov: 3,
           spd: 475,
@@ -121,7 +121,7 @@ class MechaList {
         ["攻撃", "防御"],
         { air: "B", grd: "A", wtr: "B", spc: "A" },
         new Weapon("格闘（グリッドマン）", "打撃", { min: 1, max: 2 }),
-        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sight: 100 })
+        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sig: 100 })
       ),
       new Mecha(
         "ナイチンゲール",
@@ -129,7 +129,7 @@ class MechaList {
           hp: 18100,
           atk: 2864,
           def: 2144,
-          sight: 235,
+          sig: 235,
           agi: 293,
           mov: 4,
           spd: 550,
@@ -138,7 +138,7 @@ class MechaList {
         ["バランス"],
         { air: "B", grd: "A", wtr: "B", spc: "A" },
         new Weapon("マイクロミサイル", "実弾", { min: 1, max: 4 }),
-        new SpecialSkill("超硬装甲（照準値）", 2, { def: 400, sight: 40 })
+        new SpecialSkill("超硬装甲（照準値）", 2, { def: 400, sig: 40 })
       ),
       new Mecha(
         "スコープドッグRSC",
@@ -146,7 +146,7 @@ class MechaList {
           hp: 20250,
           atk: 2950,
           def: 2530,
-          sight: 310,
+          sig: 310,
           agi: 316,
           mov: 3,
           spd: 625,
@@ -155,7 +155,7 @@ class MechaList {
         ["命中", "回避"],
         { air: "B", grd: "A", wtr: "B", spc: "B" },
         new Weapon("ヘビィマシンガン", "実弾", { min: 1, max: 3 }),
-        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sight: 100 })
+        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sig: 100 })
       ),
       new Mecha(
         "M9D ファルケ",
@@ -163,7 +163,7 @@ class MechaList {
           hp: 20250,
           atk: 3040,
           def: 2260,
-          sight: 262,
+          sig: 262,
           agi: 304,
           mov: 3,
           spd: 625,
@@ -172,7 +172,7 @@ class MechaList {
         ["回避"],
         { air: "B", grd: "A", wtr: "B", spc: "A" },
         new Weapon("400mmアサルト・ライフル", "実弾", { min: 1, max: 3 }),
-        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sight: 100 })
+        new SpecialSkill("超硬装甲（照準値）", 5, { def: 1000, sig: 100 })
       ),
       new Mecha(
         "Hi-νガンダム",
@@ -180,7 +180,7 @@ class MechaList {
           hp: 26000,
           atk: 3220,
           def: 2410,
-          sight: 244,
+          sig: 244,
           agi: 328,
           mov: 3,
           spd: 550,
@@ -191,7 +191,7 @@ class MechaList {
         new Weapon("ビーム・ライフル", "ビーム", { min: 1, max: 4 }),
         new SpecialSkill("Iフィールド△", 5, {
           received: { type: "ビーム", value: -2500 },
-          sight: 100,
+          sig: 100,
         })
       ),
     ];

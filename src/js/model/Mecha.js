@@ -21,8 +21,8 @@ class Mecha {
         return `防御力: ${this.status.def}`;
     }
 
-    sightString() {
-        return `照準値: ${this.status.sight}`;
+    sigString() {
+        return `照準値: ${this.status.sig}`;
     }
 
     agiString() {
@@ -38,7 +38,7 @@ class Mecha {
     }
 
     statusString() {
-        return `${this.hpString()} ${this.atkString()} ${this.defString()} ${this.sightString()} ${this.agiString()} ${this.movString()} ${this.spdString()}`;
+        return `${this.hpString()} ${this.atkString()} ${this.defString()} ${this.sigString()} ${this.agiString()} ${this.movString()} ${this.spdString()}`;
     }
 
     typeString() {
@@ -100,8 +100,8 @@ class Mecha {
         if (this.specialSkill.status.def) {
             texts.push(`防御力: ${this.specialSkill.status.def}`);
         }
-        if (this.specialSkill.status.sight) {
-            texts.push(`照準値: ${this.specialSkill.status.sight}`);
+        if (this.specialSkill.status.sig) {
+            texts.push(`照準値: ${this.specialSkill.status.sig}`);
         }
         if (this.specialSkill.status.agi) {
             texts.push(`運動性: ${this.specialSkill.status.agi}`);

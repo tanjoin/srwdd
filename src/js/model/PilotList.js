@@ -4,7 +4,7 @@ class PilotList {
       new Pilot(
         "アクセル・アルマー",
         ["ソウルゲイン"],
-        { atk: 7271, def: 6976, hit: 612, agi: 528 },
+        { atk: 7271, def: 6976, sig: 612, agi: 528 },
         [
           { name: "必中", count: 1 },
           { name: "気合", count: 1 },
@@ -26,14 +26,14 @@ class PilotList {
           new PilotSkill("防御力アップ", 11, { def: "6%" }),
           new PilotSkill("防御力アップ（大）", 20, { def: "15%" }),
           new PilotSkill("照準値・運動性アップ（大）", 7, {
-            hit: "4%",
+            sig: "4%",
             agi: "4%",
           }),
           new PilotSkill("攻撃力アップ・気力+（アクション）（大）", 15, {
             atk: "8%",
             energy: { type: "自アクション", value: 1 },
           }),
-          new PilotSkill("命中率アップ（大）", 12, { hit: "9%" }),
+          new PilotSkill("命中率アップ（大）", 12, { sig: "9%" }),
         ]
       ),
     ];
