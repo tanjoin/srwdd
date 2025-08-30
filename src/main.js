@@ -2,7 +2,7 @@
 import './style.css';
 
 async function loadPilots() {
-	const res = await fetch('/src/data/pilots.json');
+	const res = await fetch('/public/pilots.json');
 	return await res.json();
 }
 

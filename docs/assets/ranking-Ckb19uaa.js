@@ -1,0 +1,5 @@
+import"./style-SfHb7k-2.js";async function i(){return(await(await fetch("/public/pilots.json")).json()).map(n=>{const t={};for(const s in n.stats){const o=Object.values(n.stats[s]).reduce((e,r)=>e+r,0);t[s]=o}const c=t.攻撃力+t.防御力+(t.照準値+t.運動性)*10;return n.totalStats=t,n.grandTotal=c,n})}function d(l,a,n){const t=document.createElement("div");t.className="ranking-section";const c=[...l].sort((o,e)=>{const r=a==="総合値"?o.grandTotal:o.totalStats[a];return(a==="総合値"?e.grandTotal:e.totalStats[a])-r});let s=`<h2>${n}</h2><ol>`;return c.slice(0,10).forEach((o,e)=>{const r=a==="総合値"?o.grandTotal:o.totalStats[a];s+=`<li>
+      <span class="rank">${e+1}</span>
+      <span class="name">${o.name}</span>
+      <span class="stat">${r.toLocaleString()}</span>
+    </li>`}),s+="</ol>",t.innerHTML=s,t}window.addEventListener("DOMContentLoaded",async()=>{const l=await i(),a=document.querySelector(".ranking-container"),n={総合値:"総合値ランキング",攻撃力:"攻撃力ランキング",防御力:"防御力ランキング",照準値:"照準値ランキング",運動性:"運動性ランキング"};for(const t in n){const c=n[t],s=d(l,t,c);a.appendChild(s)}});
