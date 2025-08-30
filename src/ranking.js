@@ -5,12 +5,13 @@ async function loadPilots() {
   const pilots = await res.json();
   return pilots.map(pilot => {
     const totalStats = {};
-    let grandTotal = 0;
     for (const statName in pilot.stats) {
       const total = Object.values(pilot.stats[statName]).reduce((sum, value) => sum + value, 0);
       totalStats[statName] = total;
-      grandTotal += total;
     }
+    // 攻撃力・防御力と、照準値・運動性のスケールを考慮した総合値を計算
+    const grandTotal = totalStats['攻撃力'] + totalStats['防御力'] + (totalStats['照準値'] + totalStats['運動性']) * 10;
+    
     pilot.totalStats = totalStats;
     pilot.grandTotal = grandTotal;
     return pilot;
