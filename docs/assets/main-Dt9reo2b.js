@@ -1,4 +1,4 @@
-import"./style-SfHb7k-2.js";async function m(){return await(await fetch("/public/pilots.json")).json()}function c(t){const e=document.createElement("option");return e.value=t.id,e.textContent=`${t.name}（${t.series}）`,e}function v(t,e){const d=document.getElementById("result"),s=i=>{let o=0;for(const n in i)o+=i[n];return o};let a=`
+import"./style-SfHb7k-2.js";async function m(){return await(await fetch("/pilots.json")).json()}function c(t){const e=document.createElement("option");return e.value=t.id,e.textContent=`${t.name}（${t.series}）`,e}function v(t,e){const d=document.getElementById("result"),s=i=>{let o=0;for(const n in i)o+=i[n];return o};let a=`
     <div class="comparison-table">
       <div class="table-header">
         <div class="header-item">ステータス</div>
