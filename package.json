@@ -1,20 +1,15 @@
 {
   "name": "srwdd",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build:pug": "pug src/*.pug --obj src/variables.json --out docs",
-    "build:sass": "sass src/scss/*.scss docs/stylesheets/style.css",
-    "build:js": "uglifyjs src/js/*.js src/js/**/*.js -c -m -o 'docs/javascripts/bundle.min.js' --source-map \"filename='docs/javascripts/bundle.min.js.map'\"",
-    "build": "npm run build:pug && npm run build:sass && npm run build:js",
-    "watch": "node tools/watch.js"
-  },
+  "private": true,
+  "version": "2025.2.14",
+  "type": "module",
   "author": "tanjoin",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "devDependencies": {
-    "pug": "^3.0.2",
-    "pug-cli": "^1.0.0-alpha6",
-    "sass": "^1.69.5",
-    "uglify-js": "^3.17.4"
+    "vite": "^6.1.0"
   }
 }
