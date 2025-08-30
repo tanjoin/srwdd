@@ -1,7 +1,7 @@
 import './style.css';
 
 async function loadPilots() {
-  const res = await fetch('/public/pilots.json');
+  const res = await fetch('/pilots.json');
   const pilots = await res.json();
   return pilots.map(pilot => {
     const totalStats = {};
