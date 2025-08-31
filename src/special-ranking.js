@@ -5,7 +5,7 @@ let allPilots = [];
 const activeSkills = {}; // { pilotId: { skillKey: true, ... }, ... }
 
 // スキルテキストを解析して効果を返す
-function parseSkillEffect(skillText) {
+function parseSkillEffect(skillText, pilotName) {
   const effects = [];
   const statMapping = {
     '攻撃力': '攻撃力',
@@ -16,58 +16,81 @@ function parseSkillEffect(skillText) {
     '与ダメージ': '与ダメージ', // 攻撃力から与ダメージに修正
   };
 
-  // "攻撃力・照準値が12.5%増加" のような形式をパース
-  const regexMulti = /(攻撃力|防御力|照準値|運動性|HP|与ダメージ)(・(攻撃力|防御力|照準値|運動性|HP|与ダメージ))+が([\d.]+)%増加/g;
-  let matchMulti;
-  while ((matchMulti = regexMulti.exec(skillText)) !== null) {
-    const stats = matchMulti[0].split('が')[0].split('・');
-    const value = parseFloat(matchMulti[matchMulti.length - 1]);
-    stats.forEach(stat => {
-      if (statMapping[stat]) {
-        effects.push({ stat: statMapping[stat], value: value, type: 'percentage' });
-      }
-    });
-  }
-  
-  // "全ての攻撃の与ダメージが12%、照準値・運動性が5%増加する" のような複雑な形式
-  const regexComplex = /全ての攻撃の与ダメージが([\d.]+)%、(照準値・運動性)が([\d.]+)%増加する/g;
-  let matchComplex;
-  while((matchComplex = regexComplex.exec(skillText)) !== null) {
-    const damageValue = parseFloat(matchComplex[1]);
-    effects.push({ stat: '与ダメージ', value: damageValue, type: 'percentage' });
-    const otherStats = matchComplex[2].split('・');
-    const otherValue = parseFloat(matchComplex[3]);
-    otherStats.forEach(stat => {
-      if(statMapping[stat]) {
-        effects.push({ stat: statMapping[stat], value: otherValue, type: 'percentage' });
-      }
-    });
-  }
+  const sentences = skillText.split('。').filter(s => s.trim() !== '');
+
+  sentences.forEach(sentence => {
+    let targetSentence = sentence;
+    let isPilotSpecific = false;
+    let targetPilot = null;
+
+    const pilotSpecificRegex = /([^、]+?)装備時、/;
+    const pilotMatch = sentence.match(pilotSpecificRegex);
+
+    if (pilotMatch) {
+      isPilotSpecific = true;
+      targetPilot = pilotMatch[1].trim();
+      // "装備時、" の部分を除いたテキストを効果解析の対象にする
+      targetSentence = sentence.replace(pilotSpecificRegex, '');
+    }
+
+    // パイロット固有スキルで、現在のパイロットと一致しない場合はスキップ
+    if (isPilotSpecific && targetPilot !== pilotName) {
+      return; // forEachのcontinue
+    }
+    
+    // "攻撃力・照準値が12.5%増加" のような形式をパース
+    const regexMulti = /(攻撃力|防御力|照準値|運動性|HP|与ダメージ)(・(攻撃力|防御力|照準値|運動性|HP|与ダメージ))+が([\d.]+)%増加/g;
+    let matchMulti;
+    while ((matchMulti = regexMulti.exec(targetSentence)) !== null) {
+      const stats = matchMulti[0].split('が')[0].split('・');
+      const value = parseFloat(matchMulti[matchMulti.length - 1]);
+      stats.forEach(stat => {
+        if (statMapping[stat]) {
+          effects.push({ stat: statMapping[stat], value: value, type: 'percentage' });
+        }
+      });
+    }
+    
+    // "全ての攻撃の与ダメージが12%、照準値・運動性が5%増加する" のような複雑な形式
+    const regexComplex = /全ての攻撃の与ダメージが([\d.]+)%、(照準値・運動性)が([\d.]+)%増加する/g;
+    let matchComplex;
+    while((matchComplex = regexComplex.exec(targetSentence)) !== null) {
+      const damageValue = parseFloat(matchComplex[1]);
+      effects.push({ stat: '与ダメージ', value: damageValue, type: 'percentage' });
+      const otherStats = matchComplex[2].split('・');
+      const otherValue = parseFloat(matchComplex[3]);
+      otherStats.forEach(stat => {
+        if(statMapping[stat]) {
+          effects.push({ stat: statMapping[stat], value: otherValue, type: 'percentage' });
+        }
+      });
+    }
 
 
-  // "攻撃力が13%増加する" のような単純な形式をパース
-  const regexSingle = /(攻撃力|防御力|照準値|運動性|HP|与ダメージ)が([\d.]+)%増加/g;
-  let matchSingle;
-  while ((matchSingle = regexSingle.exec(skillText)) !== null) {
-    const stat = statMapping[matchSingle[1]];
-    if (stat) {
-      // 既に複合でパース済みの場合は追加しない
-      const alreadyParsed = effects.some(e => e.stat === stat && e.value === parseFloat(matchSingle[2]));
-      if (!alreadyParsed) {
-        effects.push({ stat: stat, value: parseFloat(matchSingle[2]), type: 'percentage' });
+    // "攻撃力が13%増加する" のような単純な形式をパース
+    const regexSingle = /(攻撃力|防御力|照準値|運動性|HP|与ダメージ)が([\d.]+)%増加/g;
+    let matchSingle;
+    while ((matchSingle = regexSingle.exec(targetSentence)) !== null) {
+      const stat = statMapping[matchSingle[1]];
+      if (stat) {
+        // 既に複合でパース済みの場合は追加しない
+        const alreadyParsed = effects.some(e => e.stat === stat && e.value === parseFloat(matchSingle[2]));
+        if (!alreadyParsed) {
+          effects.push({ stat: stat, value: parseFloat(matchSingle[2]), type: 'percentage' });
+        }
       }
     }
-  }
 
-  // "HPが25000増加する" のような固定値増加をパース
-  const regexAbsolute = /(HP)が([\d.]+)増加する/g;
-  let matchAbsolute;
-  while ((matchAbsolute = regexAbsolute.exec(skillText)) !== null) {
-    const stat = statMapping[matchAbsolute[1]];
-    if (stat) {
-      effects.push({ stat: stat, value: parseFloat(matchAbsolute[2]), type: 'absolute' });
+    // "HPが25000増加する" のような固定値増加をパース
+    const regexAbsolute = /(HP)が([\d.]+)増加する/g;
+    let matchAbsolute;
+    while ((matchAbsolute = regexAbsolute.exec(targetSentence)) !== null) {
+      const stat = statMapping[matchAbsolute[1]];
+      if (stat) {
+        effects.push({ stat: stat, value: parseFloat(matchAbsolute[2]), type: 'absolute' });
+      }
     }
-  }
+  });
 
   return effects;
 }
@@ -97,7 +120,7 @@ function calculateStats(pilot) {
   for (const skillKey in pilotActiveSkills) {
     if (pilotActiveSkills[skillKey]) {
       const skillText = pilot.specialSkills[skillKey];
-      const effects = parseSkillEffect(skillText);
+      const effects = parseSkillEffect(skillText, pilot.name);
       effects.forEach(effect => {
         if (effect.type === 'percentage') {
           percentageIncrease[effect.stat] += effect.value;
