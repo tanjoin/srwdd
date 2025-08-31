@@ -12,11 +12,12 @@ function parseSkillEffect(skillText) {
     '防御力': '防御力',
     '照準値': '照準値',
     '運動性': '運動性',
-    '与ダメージ': '攻撃力', // 与ダメージは攻撃力として扱う
+    'HP': 'HP',
+    '与ダメージ': '与ダメージ', // 攻撃力から与ダメージに修正
   };
 
   // "攻撃力・照準値が12.5%増加" のような形式をパース
-  const regexMulti = /(攻撃力|防御力|照準値|運動性|与ダメージ)(・(攻撃力|防御力|照準値|運動性|与ダメージ))+が([\d.]+)%増加/g;
+  const regexMulti = /(攻撃力|防御力|照準値|運動性|HP|与ダメージ)(・(攻撃力|防御力|照準値|運動性|HP|与ダメージ))+が([\d.]+)%増加/g;
   let matchMulti;
   while ((matchMulti = regexMulti.exec(skillText)) !== null) {
     const stats = matchMulti[0].split('が')[0].split('・');
@@ -33,7 +34,7 @@ function parseSkillEffect(skillText) {
   let matchComplex;
   while((matchComplex = regexComplex.exec(skillText)) !== null) {
     const damageValue = parseFloat(matchComplex[1]);
-    effects.push({ stat: '攻撃力', value: damageValue, type: 'percentage' });
+    effects.push({ stat: '与ダメージ', value: damageValue, type: 'percentage' });
     const otherStats = matchComplex[2].split('・');
     const otherValue = parseFloat(matchComplex[3]);
     otherStats.forEach(stat => {
@@ -45,7 +46,7 @@ function parseSkillEffect(skillText) {
 
 
   // "攻撃力が13%増加する" のような単純な形式をパース
-  const regexSingle = /(攻撃力|防御力|照準値|運動性|与ダメージ)が([\d.]+)%増加/g;
+  const regexSingle = /(攻撃力|防御力|照準値|運動性|HP|与ダメージ)が([\d.]+)%増加/g;
   let matchSingle;
   while ((matchSingle = regexSingle.exec(skillText)) !== null) {
     const stat = statMapping[matchSingle[1]];
@@ -55,6 +56,16 @@ function parseSkillEffect(skillText) {
       if (!alreadyParsed) {
         effects.push({ stat: stat, value: parseFloat(matchSingle[2]), type: 'percentage' });
       }
+    }
+  }
+
+  // "HPが25000増加する" のような固定値増加をパース
+  const regexAbsolute = /(HP)が([\d.]+)増加する/g;
+  let matchAbsolute;
+  while ((matchAbsolute = regexAbsolute.exec(skillText)) !== null) {
+    const stat = statMapping[matchAbsolute[1]];
+    if (stat) {
+      effects.push({ stat: stat, value: parseFloat(matchAbsolute[2]), type: 'absolute' });
     }
   }
 
@@ -72,6 +83,15 @@ function calculateStats(pilot) {
     '防御力': 0,
     '照準値': 0,
     '運動性': 0,
+    'HP': 0,
+    '与ダメージ': 0, // 与ダメージを追加
+  };
+  const absoluteIncrease = {
+    '攻撃力': 0,
+    '防御力': 0,
+    '照準値': 0,
+    '運動性': 0,
+    'HP': 0,
   };
 
   for (const skillKey in pilotActiveSkills) {
@@ -81,27 +101,39 @@ function calculateStats(pilot) {
       effects.forEach(effect => {
         if (effect.type === 'percentage') {
           percentageIncrease[effect.stat] += effect.value;
+        } else if (effect.type === 'absolute') {
+          absoluteIncrease[effect.stat] += effect.value;
         }
       });
     }
   }
 
   const calculatedStats = {};
-  for (const statName in baseStats) {
+  const statsToCalculate = ['攻撃力', '防御力', '照準値', '運動性', 'HP'];
+
+  statsToCalculate.forEach(statName => {
     calculatedStats[statName] = {};
-    const base = (baseStats[statName]['基礎ステータス'] || 0);
-    const skillBonus = (baseStats[statName]['基本スキル'] || 0) + (baseStats[statName]['特殊スキル'] || 0);
+    const baseStatForStat = baseStats[statName] || {};
+    const base = (baseStatForStat['基礎ステータス'] || 0);
     const multiplier = 1 + (percentageIncrease[statName] || 0) / 100;
     
     calculatedStats[statName]['基礎ステータス'] = base;
-    calculatedStats[statName]['基本スキル'] = baseStats[statName]['基本スキル'] || 0;
-    calculatedStats[statName]['特殊スキル'] = baseStats[statName]['特殊スキル'] || 0;
-    calculatedStats[statName]['特殊スキル適用後'] = Math.round(base * multiplier) - base;
-  }
-  
-  return calculatedStats;
-}
+    calculatedStats[statName]['基本スキル'] = baseStatForStat['基本スキル'] || 0;
+    calculatedStats[statName]['特殊スキル'] = baseStatForStat['特殊スキル'] || 0;
+    calculatedStats[statName]['特殊スキル適用後'] = Math.round(base * multiplier) - base + (absoluteIncrease[statName] || 0);
+  });
 
+  // 与ダメージは別計算
+  calculatedStats['与ダメージ'] = {
+      '基礎ステータス': 0,
+      '基本スキル': 0,
+      '特殊スキル': 0,
+      '特殊スキル適用後': percentageIncrease['与ダメージ'] // パーセンテージをそのまま値として格納
+  };
+
+  pilot.calculatedStats = calculatedStats;
+  return pilot;
+}
 
 // ランキングのセクションを作成
 function createRanking(pilots, stat, title) {
@@ -131,36 +163,61 @@ function createRanking(pilots, stat, title) {
 // ランキング全体を再描画
 function displayRanking() {
   const rankingContainer = document.querySelector('.ranking-container');
-  rankingContainer.innerHTML = '';
+  rankingContainer.innerHTML = ''; // Clear previous ranking
+  rankingContainer.style.display = 'flex';
+  rankingContainer.style.flexWrap = 'wrap';
+  rankingContainer.style.justifyContent = 'center';
+  rankingContainer.style.gap = '20px';
 
-  const processedPilots = allPilots.map(pilot => {
-    const calculatedStats = calculateStats(pilot);
-    const totalStats = {};
-    for (const statName in calculatedStats) {
-      totalStats[statName] = Object.values(calculatedStats[statName]).reduce((sum, value) => sum + (Number(value) || 0), 0);
-    }
-    const grandTotal = (totalStats['攻撃力'] || 0) + (totalStats['防御力'] || 0) + ((totalStats['照準値'] || 0) + (totalStats['運動性'] || 0)) * 10;
-    
-    return {
-      ...pilot,
-      totalStats,
-      grandTotal,
-    };
+
+  // スキル適用後のステータスを全パイロットに再計算させる
+  const pilotsWithCalculatedStats = allPilots.map(calculateStats);
+
+  const stats = ['攻撃力', '防御力', '照準値', '運動性', 'HP', '与ダメージ'];
+
+  stats.forEach(stat => {
+    const tableContainer = document.createElement('div');
+    tableContainer.className = 'ranking-table-container';
+
+    const title = document.createElement('h3');
+    title.textContent = `${stat} ランキング`;
+    tableContainer.appendChild(title);
+
+    const table = document.createElement('table');
+    table.className = 'ranking-table';
+
+    const headerRow = table.insertRow();
+    headerRow.innerHTML = `<th>順位</th><th>パイロット</th><th>${stat} (適用後)</th><th>${stat} (特殊スキル適用前)</th><th>${stat} (特殊スキル適用)</th>`;
+
+    // パイロットをソート
+    const sortedPilots = [...pilotsWithCalculatedStats].sort((a, b) => {
+      const statA = (a.calculatedStats[stat] ? (a.calculatedStats[stat]['基礎ステータス'] || 0) + (a.calculatedStats[stat]['基本スキル'] || 0) + (a.calculatedStats[stat]['特殊スキル'] || 0) + (a.calculatedStats[stat]['特殊スキル適用後'] || 0) : 0);
+      const statB = (b.calculatedStats[stat] ? (b.calculatedStats[stat]['基礎ステータス'] || 0) + (b.calculatedStats[stat]['基本スキル'] || 0) + (b.calculatedStats[stat]['特殊スキル'] || 0) + (b.calculatedStats[stat]['特殊スキル適用後'] || 0) : 0);
+      
+      // 与ダメージは特殊スキル適用後（パーセンテージ）で比較
+      if (stat === '与ダメージ') {
+        return (b.calculatedStats[stat]['特殊スキル適用後'] || 0) - (a.calculatedStats[stat]['特殊スキル適用後'] || 0);
+      }
+      return statB - statA;
+    });
+
+    sortedPilots.forEach((pilot, index) => {
+      const totalStat = (pilot.calculatedStats[stat] ? (pilot.calculatedStats[stat]['基礎ステータス'] || 0) + (pilot.calculatedStats[stat]['基本スキル'] || 0) + (pilot.calculatedStats[stat]['特殊スキル'] || 0) + (pilot.calculatedStats[stat]['特殊スキル適用後'] || 0) : 0);
+      const statBeforeSpecialSkill = (pilot.calculatedStats[stat] ? (pilot.calculatedStats[stat]['基礎ステータス'] || 0) + (pilot.calculatedStats[stat]['基本スキル'] || 0) + (pilot.calculatedStats[stat]['特殊スキル'] || 0) : 0);
+      const appliedStat = pilot.calculatedStats[stat] ? pilot.calculatedStats[stat]['特殊スキル適用後'] || 0 : 0;
+      
+      const row = table.insertRow();
+      let appliedStatDisplay = `+${appliedStat}`;
+      if (stat === '与ダメージ') {
+        appliedStatDisplay = `+${appliedStat.toFixed(1)}%`;
+      }
+
+      row.innerHTML = `<td>${index + 1}</td><td>${pilot.name}</td><td>${totalStat}</td><td>${statBeforeSpecialSkill}</td><td>${appliedStatDisplay}</td>`;
+    });
+
+    tableContainer.appendChild(table);
+    rankingContainer.appendChild(tableContainer);
   });
-
-  const statsToRank = {
-    '総合値': '総合値ランキング',
-    '攻撃力': '攻撃力ランキング',
-    '防御力': '防御力ランキング',
-    '照準値': '照準値ランキング',
-    '運動性': '運動性ランキング'
-  };
-
-  for (const stat in statsToRank) {
-    const title = statsToRank[stat];
-    const rankingSection = createRanking(processedPilots, stat, title);
-    rankingContainer.appendChild(rankingSection);
-  }
 }
 
 // パイロットのスキル選択UIを表示

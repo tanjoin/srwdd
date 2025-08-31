@@ -213,6 +213,65 @@ nav a:hover {
   text-align: right;
 }
 
+/* Special Ranking Table Styles */
+.ranking-table-container {
+  background-color: var(--container-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  flex-grow: 1;
+  min-width: 400px;
+}
+
+.ranking-table-container h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.4rem;
+  color: var(--primary-color);
+  text-align: center;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 8px;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+.ranking-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ranking-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ranking-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.ranking-table td:nth-child(1), /* Rank */
+.ranking-table td:nth-child(3), /* Total */
+.ranking-table td:nth-child(4), /* Base */
+.ranking-table td:nth-child(5) { /* Applied */
+  text-align: right;
+}
+
+.ranking-table td:nth-child(2) { /* Name */
+  font-weight: 500;
+}
+
 .file-input-container {
   display: flex;
   justify-content: center;
