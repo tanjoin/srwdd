@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="./assets/%E3%81%99-BfsO0p6D.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SRWDDの考察</title>
-    <script type="module" crossorigin src="./assets/main-CQJq2_cE.js"></script>
+    <title>SRWDDの考察 | 特殊スキル適用後ランキング</title>
+    <script type="module" crossorigin src="./assets/special-ranking-ILIpBmjF.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/papaparse.min-Bjupvl7W.js">
     <link rel="stylesheet" crossorigin href="./assets/papaparse-BWS_bzPL.css">
   </head>
@@ -17,24 +17,14 @@
         <input type="file" id="csvFileInput" accept=".csv">
       </div>
       <nav>
-        <button id="show-comparison" class="active">比較</button>
-        <button id="show-ranking">ランキング</button>
-        <a href="special-ranking.html"><button>特殊スキル適用後ランキング</button></a>
+        <a href="index.html"><button>比較</button></a>
+        <a href="ranking.html"><button>ランキング</button></a>
+        <a href="special-ranking.html"><button class="active">特殊スキル適用後ランキング</button></a>
       </nav>
 
-      <div id="comparison-view">
-        <h2>パイロットステータス比較</h2>
-        <div class="selectors">
-          <select id="pilot1"></select>
-          <span>vs</span>
-          <select id="pilot2"></select>
-          <button id="compareBtn" disabled>比較</button>
-        </div>
-        <div id="result"></div>
-      </div>
-
-      <div id="ranking-view" style="display: none;">
-        <h2>パイロットランキング</h2>
+      <div id="ranking-view">
+        <h2>特殊スキル適用後パイロットランキング</h2>
+        <div id="pilot-skills"></div>
         <div class="ranking-container">
           <!-- ランキングはここに表示されます -->
         </div>
@@ -42,4 +32,3 @@
     </div>
   </body>
 </html>
-
