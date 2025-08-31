@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/public/す.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SRWDDの考察 | 特殊スキル適用後ランキング</title>
+    <link rel="stylesheet" href="/src/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>スーパーロボット大戦DD パイロットステータス</h1>
+      <div class="file-input-container">
+        <label for="csvFileInput">CSVファイルを選択:</label>
+        <input type="file" id="csvFileInput" accept=".csv">
+      </div>
+      <nav>
+        <a href="index.html"><button>比較</button></a>
+        <a href="ranking.html"><button>ランキング</button></a>
+        <a href="special-ranking.html"><button class="active">特殊スキル適用後ランキング</button></a>
+      </nav>
+
+      <div id="ranking-view">
+        <h2>特殊スキル適用後パイロットランキング</h2>
+        <div id="pilot-skills"></div>
+        <div class="ranking-container">
+          <!-- ランキングはここに表示されます -->
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/special-ranking.js"></script>
+  </body>
+</html>

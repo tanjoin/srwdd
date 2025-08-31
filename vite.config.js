@@ -8,8 +8,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        ranking: resolve(__dirname, "ranking.html")
-      }
-    }
+        ranking: resolve(__dirname, "ranking.html"),
+        "special-ranking": resolve(__dirname, "special-ranking.html"),
+      },
+    },
   },
 });
