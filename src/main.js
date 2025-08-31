@@ -1,10 +1,6 @@
 
 import './style.css';
-
-async function loadPilots() {
-	const res = await fetch('pilots.json');
-	return await res.json();
-}
+import Papa from 'papaparse';
 
 function createOption(pilot) {
 	const opt = document.createElement('option');
@@ -34,7 +30,9 @@ function showResult(pilot1, pilot2) {
       <div class="table-body">
   `;
 
-  for (const key of Object.keys(pilot1.stats)) {
+  const statsKeys = ["攻撃力", "防御力", "照準値", "運動性"];
+
+  for (const key of statsKeys) {
     const total1 = calculateTotal(pilot1.stats[key]);
     const total2 = calculateTotal(pilot2.stats[key]);
     const winnerClass1 = total1 > total2 ? 'winner' : '';
@@ -53,25 +51,75 @@ function showResult(pilot1, pilot2) {
   resultDiv.innerHTML = html;
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-	const pilots = await loadPilots();
-	const select1 = document.getElementById('pilot1');
-	const select2 = document.getElementById('pilot2');
-	pilots.forEach(pilot => {
-		select1.appendChild(createOption(pilot));
-		select2.appendChild(createOption(pilot));
-	});
-	select2.selectedIndex = 1;
+function processCSV(file, callback) {
+  Papa.parse(file, {
+    header: true,
+    dynamicTyping: true,
+    complete: (results) => {
+      const pilots = results.data.map(row => {
+        const stats = {};
+        for (const key in row) {
+          if (key.includes('_')) {
+            const [statName, subStatName] = key.split('_');
+            if (!stats[statName]) {
+              stats[statName] = {};
+            }
+            stats[statName][subStatName] = row[key];
+          }
+        }
+        return {
+          id: row.id,
+          name: row.name,
+          series: row.series,
+          stats: stats
+        };
+      }).filter(p => p.id); // idがない行は除外
+      callback(pilots);
+    }
+  });
+}
 
-	document.getElementById('compareBtn').addEventListener('click', () => {
-		const id1 = select1.value;
-		const id2 = select2.value;
-		if (id1 === id2) {
-			document.getElementById('result').textContent = '異なるパイロットを選択してください。';
-			return;
-		}
-		const pilot1 = pilots.find(p => p.id === id1);
-		const pilot2 = pilots.find(p => p.id === id2);
-		showResult(pilot1, pilot2);
-	});
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const csvFileInput = document.getElementById('csvFileInput');
+  const select1 = document.getElementById('pilot1');
+  const select2 = document.getElementById('pilot2');
+  const compareBtn = document.getElementById('compareBtn');
+
+  csvFileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      return;
+    }
+
+    processCSV(file, (pilots) => {
+      // プルダウンをクリア
+      select1.innerHTML = '';
+      select2.innerHTML = '';
+
+      pilots.forEach(pilot => {
+        select1.appendChild(createOption(pilot));
+        select2.appendChild(createOption(pilot));
+      });
+      select2.selectedIndex = pilots.length > 1 ? 1 : 0;
+
+      compareBtn.disabled = false;
+
+      compareBtn.onclick = () => {
+        const id1 = select1.value;
+        const id2 = select2.value;
+        if (id1 === id2) {
+          document.getElementById('result').textContent = '異なるパイロットを選択してください。';
+          return;
+        }
+        const pilot1 = pilots.find(p => p.id.toString() === id1);
+        const pilot2 = pilots.find(p => p.id.toString() === id2);
+        showResult(pilot1, pilot2);
+      };
+      // 初期比較を実行
+      if (pilots.length > 1) {
+        compareBtn.click();
+      }
+    });
+  });
 });
