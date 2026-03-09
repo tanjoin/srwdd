@@ -284,15 +284,13 @@ function render() {
               </div>
             </div>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2" id="equip-list">
-              ${equipCandidates.map(({ skill, eligible }, idx) => {
+              ${equipCandidates.filter(({ eligible }) => eligible).map(({ skill }, idx) => {
                 const skillId = skill?.id ?? '';
                 const checked = equippedSet.has(String(skillId)) ? 'checked' : '';
-                const disabled = eligible ? '' : 'disabled';
                 const label = skill?.name || '(名称未設定)';
-                const opacity = eligible ? '' : 'opacity-50';
                 const inputId = `equip-skill-${skillId || idx}`;
-                return `<div class="col equip-tile ${opacity}">
-                  <input class="btn-check equip-skill" type="checkbox" id="${inputId}" value="${skillId}" ${checked} ${disabled} />
+                return `<div class="col equip-tile">
+                  <input class="btn-check equip-skill" type="checkbox" id="${inputId}" value="${skillId}" ${checked} />
                   <label class="btn btn-outline-dark w-100 text-start" for="${inputId}">${label}</label>
                 </div>`;
               }).join('')}
