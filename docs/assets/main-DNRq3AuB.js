@@ -186,7 +186,10 @@ License: MIT
         </div>
         <div class="col-12 col-md-4">
           <label class="form-label small">対応パイロット</label>
-          <input name="pilotNames" placeholder="対応パイロット（カンマ区切り可）" class="form-control" />
+          <input name="pilotNames" placeholder="対応パイロット（カンマ区切り可）" class="form-control" list="pilot-name-list" autocomplete="off" />
+          <datalist id="pilot-name-list">
+            ${s.map(a=>`<option value="${a.name}">`).join("")}
+          </datalist>
         </div>
         <div class="col-12 col-md-4">
           <label class="form-label small">その他効果</label>
