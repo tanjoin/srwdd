@@ -28,6 +28,7 @@ function saveState() {
 let state = loadState();
 let currentView = 'pilot';
 let selectedPilotId = null;
+let editingSkillId = null;
 let equipOpen = false;
 let sortState = {
   pilot: { key: 'id', dir: 'asc' },
@@ -67,6 +68,13 @@ function render() {
   const skillSort = sortState.skill;
   const sortedPilots = [...pilots].sort((a, b) => compareValues(a, b, pilotSort.key, pilotSort.dir));
   const sortedSkills = [...skills].sort((a, b) => compareValues(a, b, skillSort.key, skillSort.dir));
+  const editingSkill = currentView === 'skill'
+    ? skills.find(s => String(s.id) === String(editingSkillId))
+    : null;
+  const editingSkillData = editingSkill?.data || {};
+  const editingPilotNamesValue = Array.isArray(editingSkillData.pilotNames)
+    ? editingSkillData.pilotNames.join(', ')
+    : (editingSkillData.pilotNames || '');
 
   app.innerHTML = `
     <div class="app-shell">
@@ -208,7 +216,7 @@ function render() {
           </tr>
         </thead>
         <tbody>
-          ${sortedSkills.map((s, i) => `
+          ${sortedSkills.map((s) => `
             <tr>
               <td>${s.id || ''}</td>
               <td>${s.name || ''}</td>
@@ -219,7 +227,10 @@ function render() {
               <td>${s.accuracy || 0}</td>
               <td>${s.mobility || 0}</td>
               <td class="text-center">
-                <button class="skill-delete btn btn-sm btn-danger" data-index="${i}" title="削除" aria-label="削除">
+                <button class="skill-edit btn btn-sm btn-outline-secondary" data-id="${s.id}" title="更新" aria-label="更新">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="skill-delete btn btn-sm btn-danger" data-id="${s.id}" title="削除" aria-label="削除">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -232,31 +243,32 @@ function render() {
     </div>
     <div class="card border-0 shadow-sm rounded-4 mb-4">
       <div class="card-header bg-transparent border-0 pt-3">
-        <h2 class="h6 mb-0">スキル追加</h2>
+        <h2 class="h6 mb-0">${editingSkill ? 'スキル更新' : 'スキル追加'}</h2>
       </div>
       <div class="card-body">
       <form id="skill-form" class="row g-3">
         <div class="col-12 col-md-4">
           <label class="form-label small">名前</label>
-          <input name="name" placeholder="名前" required class="form-control" />
+          <input name="name" placeholder="名前" required class="form-control" value="${escapeHtml(editingSkillData.name || '')}" />
         </div>
         <div class="col-12 col-md-4">
           <label class="form-label small">対応パイロット</label>
-          <input name="pilotNames" placeholder="対応パイロット（カンマ区切り可）" class="form-control" list="pilot-name-list" autocomplete="off" />
+          <input name="pilotNames" placeholder="対応パイロット（カンマ区切り可）" class="form-control" list="pilot-name-list" autocomplete="off" value="${escapeHtml(editingPilotNamesValue)}" />
           <datalist id="pilot-name-list">
             ${pilots.map(p => `<option value="${p.name}">`).join('')}
           </datalist>
         </div>
         <div class="col-12 col-md-4">
           <label class="form-label small">その他効果</label>
-          <input name="effect" placeholder="その他効果" class="form-control" />
+          <input name="effect" placeholder="その他効果" class="form-control" value="${escapeHtml(editingSkillData.effect || '')}" />
         </div>
-        <div class="col-6 col-md-3"><input name="attack" type="number" placeholder="攻撃" class="form-control" /></div>
-        <div class="col-6 col-md-3"><input name="defense" type="number" placeholder="防御" class="form-control" /></div>
-        <div class="col-6 col-md-3"><input name="accuracy" type="number" placeholder="照準" class="form-control" /></div>
-        <div class="col-6 col-md-3"><input name="mobility" type="number" placeholder="運動" class="form-control" /></div>
+        <div class="col-6 col-md-3"><input name="attack" type="number" placeholder="攻撃" class="form-control" value="${editingSkillData.attack ?? ''}" /></div>
+        <div class="col-6 col-md-3"><input name="defense" type="number" placeholder="防御" class="form-control" value="${editingSkillData.defense ?? ''}" /></div>
+        <div class="col-6 col-md-3"><input name="accuracy" type="number" placeholder="照準" class="form-control" value="${editingSkillData.accuracy ?? ''}" /></div>
+        <div class="col-6 col-md-3"><input name="mobility" type="number" placeholder="運動" class="form-control" value="${editingSkillData.mobility ?? ''}" /></div>
         <div class="col-12">
-          <button type="submit" class="btn btn-primary">追加</button>
+          <button type="submit" class="btn btn-primary">${editingSkill ? '更新' : '追加'}</button>
+          ${editingSkill ? '<button type="button" id="cancel-skill-edit" class="btn btn-outline-secondary ms-2">キャンセル</button>' : ''}
         </div>
       </form>
       </div>
@@ -306,6 +318,14 @@ function render() {
       </div>
     </div>
     ` : ''}
+      </div>
+    </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="app-toast" class="toast align-items-center text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true">
+        <div class="d-flex">
+          <div id="app-toast-message" class="toast-body"></div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="閉じる"></button>
+        </div>
       </div>
     </div>
   `;
@@ -405,6 +425,19 @@ function render() {
     document.getElementById('skill-csv').onchange = handleSkillCSVImport;
     document.getElementById('export-skill').onclick = handleSkillCSVExport;
     document.getElementById('skill-form').onsubmit = handleSkillFormSubmit;
+    document.querySelectorAll('.skill-edit').forEach(btn => {
+      btn.onclick = () => {
+        editingSkillId = btn.getAttribute('data-id');
+        render();
+      };
+    });
+    const cancelSkillEditBtn = document.getElementById('cancel-skill-edit');
+    if (cancelSkillEditBtn) {
+      cancelSkillEditBtn.onclick = () => {
+        editingSkillId = null;
+        render();
+      };
+    }
   }
 
   document.querySelectorAll('th.sortable').forEach(th => {
@@ -438,8 +471,12 @@ function render() {
   } else {
     document.querySelectorAll('.skill-delete').forEach(btn => {
       btn.onclick = () => {
-        const idx = Number(btn.getAttribute('data-index'));
-        if (!isNaN(idx)) {
+        const id = btn.getAttribute('data-id');
+        const idx = state.skills.findIndex(s => String(s.id || s.data?.id) === String(id));
+        if (idx !== -1) {
+          if (String(editingSkillId) === String(id)) {
+            editingSkillId = null;
+          }
           state.skills.splice(idx, 1);
           saveState();
           render();
@@ -464,6 +501,26 @@ function normalizeSortValue(obj, key) {
   const num = Number(value);
   if (!isNaN(num) && String(value).trim() !== '') return num;
   return String(value).toLowerCase();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function showToast(message) {
+  const toastEl = document.getElementById('app-toast');
+  const messageEl = document.getElementById('app-toast-message');
+  if (!toastEl || !messageEl) return;
+  messageEl.textContent = message;
+  if (window.bootstrap?.Toast) {
+    const toast = window.bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 1800 });
+    toast.show();
+  }
 }
 
 function handlePilotCSVImport(e) {
@@ -542,6 +599,7 @@ function handleSkillCSVImport(e) {
     header: true,
     complete: (results) => {
       state.skills = results.data.map(row => new Skill({ data: row }));
+      editingSkillId = null;
       saveState();
       render();
     }
@@ -596,15 +654,11 @@ function handleSkillFormSubmit(e) {
   e.preventDefault();
   const form = e.target;
   const formData = new FormData(form);
+  let updated = false;
   const name = formData.get('name') || '';
   const pilotNames = formData.get('pilotNames') || '';
   const effect = formData.get('effect') || '';
-  const maxId = state.skills.reduce((max, s) => {
-    const idNum = Number(s.id || s.data?.id);
-    return !isNaN(idNum) && idNum > max ? idNum : max;
-  }, 0);
   const data = {
-    id: String(maxId + 1),
     name,
     pilotNames,
     effect,
@@ -613,10 +667,30 @@ function handleSkillFormSubmit(e) {
     accuracy: Number(formData.get('accuracy')) || 0,
     mobility: Number(formData.get('mobility')) || 0,
   };
-  state.skills.push(new Skill({ data }));
+
+  if (editingSkillId) {
+    const targetIndex = state.skills.findIndex(s => String(s.id || s.data?.id) === String(editingSkillId));
+    if (targetIndex !== -1) {
+      const current = state.skills[targetIndex];
+      const currentId = String(current.id || current.data?.id || editingSkillId);
+      state.skills[targetIndex] = new Skill({ data: { id: currentId, ...data } });
+      updated = true;
+    }
+    editingSkillId = null;
+  } else {
+    const maxId = state.skills.reduce((max, s) => {
+      const idNum = Number(s.id || s.data?.id);
+      return !isNaN(idNum) && idNum > max ? idNum : max;
+    }, 0);
+    state.skills.push(new Skill({ data: { id: String(maxId + 1), ...data } }));
+  }
+
   form.reset();
   saveState();
   render();
+  if (updated) {
+    showToast('スキルを更新しました');
+  }
 }
 
 render();
