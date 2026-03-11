@@ -29,7 +29,7 @@ function saveState() {
 }
 
 function normalizeView(view) {
-  return ['pilot', 'skill', 'unit'].includes(view) ? view : 'pilot';
+  return ['pilot', 'skill', 'unit', 'ranking'].includes(view) ? view : 'pilot';
 }
 
 function getViewFromQuery() {
@@ -50,12 +50,14 @@ let selectedPilotId = null;
 let selectedUnitId = null;
 let editingSkillId = null;
 let editingUnitId = null;
+let skillFilterPilot = '';
 let equipOpen = false;
 let unitPilotOpen = false;
 let sortState = {
   pilot: { key: 'id', dir: 'asc' },
   skill: { key: 'id', dir: 'asc' },
   unit: { key: 'id', dir: 'asc' },
+  ranking: { key: 'score', dir: 'desc' },
 };
 
 function buildPilot(row) {
@@ -107,7 +109,77 @@ function render() {
   const sortedPilots = [...pilots].sort((a, b) => compareValues(a, b, pilotSort.key, pilotSort.dir));
   const sortedSkills = [...skills].sort((a, b) => compareValues(a, b, skillSort.key, skillSort.dir));
   const sortedUnits = [...units].sort((a, b) => compareValues(a, b, unitSort.key, unitSort.dir));
+  const filteredSkills = sortedSkills.filter(s => {
+    if (!skillFilterPilot) return true;
+    const names = Array.isArray(s.pilotNames) ? s.pilotNames : [];
+    return names.some(name => String(name).includes(skillFilterPilot));
+  });
   const pilotById = new Map(pilots.map(p => [String(p.id), p]));
+  const rankingSort = sortState.ranking;
+  const rankingRows = units
+    .map(u => {
+      const pilot = pilotById.get(String(u.pilotId));
+      if (!pilot) return null;
+      const attack = (Number(u.attack) || 0) + (Number(pilot.totalAttack) || 0);
+      const defense = (Number(u.defense) || 0) + (Number(pilot.totalDefense) || 0);
+      const accuracy = (Number(u.accuracy) || 0) + (Number(pilot.totalAccuracy) || 0);
+      const mobility = (Number(u.mobility) || 0) + (Number(pilot.totalMobility) || 0);
+      const baseHp = Number(u.data?.baseHp ?? u.baseHp ?? u.hp) || 0;
+      const partsIncreaseHp = Number(u.data?.partsIncreaseHp ?? u.partsIncreaseHp ?? 0) || 0;
+      const combatPower = Math.round(
+        (baseHp / 9) +
+        (partsIncreaseHp * (2 / 3)) +
+        attack +
+        defense +
+        (accuracy * 10) +
+        (mobility * 10)
+      );
+      return {
+        unitId: String(u.id || ''),
+        unitName: u.name || '',
+        pilotName: pilot.name || '',
+        hp: Number(u.hp) || 0,
+        baseHp,
+        partsIncreaseHp,
+        movement: Number(u.movement) || 0,
+        speed: Number(u.speed) || 0,
+        attack,
+        defense,
+        accuracy,
+        mobility,
+        total: attack + defense + accuracy + mobility,
+        combatPower,
+      };
+    })
+    .filter(Boolean);
+
+  const rankingWeights = {
+    hp: 0.15,
+    attack: 0.22,
+    defense: 0.22,
+    accuracy: 0.18,
+    mobility: 0.18,
+    movement: 0.025,
+    speed: 0.025,
+  };
+  const rankingFields = Object.keys(rankingWeights);
+  const rankingFieldMax = rankingFields.reduce((acc, field) => {
+    const maxValue = Math.max(...rankingRows.map(row => Number(row[field]) || 0), 0);
+    acc[field] = maxValue > 0 ? maxValue : 1;
+    return acc;
+  }, {});
+  const scoredRankingRows = rankingRows
+    .map(row => {
+      const score = rankingFields.reduce((sum, field) => {
+        const normalized = (Number(row[field]) || 0) / rankingFieldMax[field];
+        return sum + (normalized * rankingWeights[field]);
+      }, 0);
+      return {
+        ...row,
+        score: Number((score * 100).toFixed(2)),
+      };
+    })
+    .sort((a, b) => compareValues(a, b, rankingSort.key, rankingSort.dir));
   const selectedUnit = units.find(u => String(u.id) === String(selectedUnitId));
   const selectedUnitPilotId = selectedUnit?.pilotId || '';
   const editingUnit = currentView === 'unit'
@@ -140,6 +212,9 @@ function render() {
             </li>
             <li class="nav-item">
               <button id="view-unit" class="nav-link ${currentView === 'unit' ? 'active' : ''}" type="button">機体</button>
+            </li>
+            <li class="nav-item">
+              <button id="view-ranking" class="nav-link ${currentView === 'ranking' ? 'active' : ''}" type="button">ランキング</button>
             </li>
           </ul>
         </div>
@@ -245,6 +320,10 @@ function render() {
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
           <h2 class="h6 mb-0">スキルデータ</h2>
           <div class="d-flex flex-wrap gap-2 align-items-center">
+            <select id="skill-filter-pilot" class="form-select form-select-sm">
+              <option value="">全パイロット</option>
+              ${Array.from(new Set(pilots.map(p => p.name).filter(Boolean))).map(name => `<option value="${escapeHtml(name)}" ${skillFilterPilot === name ? 'selected' : ''}>${name}</option>`).join('')}
+            </select>
             <input type="file" id="skill-csv" accept=".csv" class="form-control form-control-sm" />
             <button id="export-skill" class="btn btn-sm btn-primary">
               <i class="bi bi-download me-1"></i>CSVエクスポート
@@ -269,7 +348,7 @@ function render() {
           </tr>
         </thead>
         <tbody>
-          ${sortedSkills.map((s) => `
+          ${filteredSkills.map((s) => `
             <tr>
               <td>${s.id || ''}</td>
               <td>${s.name || ''}</td>
@@ -355,7 +434,7 @@ function render() {
             <th rowspan="3" data-sort="accuracy" class="sortable">照準値</th>
             <th rowspan="3" data-sort="mobility" class="sortable">運動性</th>
             <th rowspan="3" data-sort="movement" class="sortable">移動</th>
-            <th rowspan="3" data-sort="speed" class="sortable">速さ</th>
+            <th rowspan="3" data-sort="speed" class="sortable">ｽﾋﾟｰﾄﾞ</th>
             <th rowspan="3" data-sort="specialAbilityName" class="sortable">特殊能力名</th>
             <th rowspan="3" data-sort="specialAbilityEffect" class="sortable">特殊能力効果</th>
             <th rowspan="3" data-sort="terrainAir" class="sortable">空</th>
@@ -380,11 +459,6 @@ function render() {
         <tbody>
           ${sortedUnits.map((u) => {
             const pilot = pilotById.get(String(u.pilotId));
-            const hasPilot = Boolean(pilot);
-            const combinedAttack = (Number(u.attack) || 0) + (Number(pilot?.totalAttack) || 0);
-            const combinedDefense = (Number(u.defense) || 0) + (Number(pilot?.totalDefense) || 0);
-            const combinedAccuracy = (Number(u.accuracy) || 0) + (Number(pilot?.totalAccuracy) || 0);
-            const combinedMobility = (Number(u.mobility) || 0) + (Number(pilot?.totalMobility) || 0);
             return `
             <tr>
               <td>${u.id || ''}</td>
@@ -393,22 +467,10 @@ function render() {
               <td>${u.size || ''}</td>
               <td>${u.type || ''}</td>
               <td>${u.hp || 0}</td>
-              <td>
-                <div>${u.attack || 0}</div>
-                ${hasPilot ? `<div class="small text-secondary text-nowrap">${combinedAttack}</div>` : ''}
-              </td>
-              <td>
-                <div>${u.defense || 0}</div>
-                ${hasPilot ? `<div class="small text-secondary text-nowrap">${combinedDefense}</div>` : ''}
-              </td>
-              <td>
-                <div>${u.accuracy || 0}</div>
-                ${hasPilot ? `<div class="small text-secondary text-nowrap">${combinedAccuracy}</div>` : ''}
-              </td>
-              <td>
-                <div>${u.mobility || 0}</div>
-                ${hasPilot ? `<div class="small text-secondary text-nowrap">${combinedMobility}</div>` : ''}
-              </td>
+              <td>${u.attack || 0}</td>
+              <td>${u.defense || 0}</td>
+              <td>${u.accuracy || 0}</td>
+              <td>${u.mobility || 0}</td>
               <td>${u.movement || 0}</td>
               <td>${u.speed || 0}</td>
               <td>${u.specialAbility?.name || ''}</td>
@@ -461,12 +523,14 @@ function render() {
           <input name="type" placeholder="タイプ" class="form-control" value="${escapeHtml(editingUnitData.type || '')}" />
         </div>
         <div class="col-6 col-md-3"><input name="hp" type="number" placeholder="HP" class="form-control" value="${editingUnitData.hp ?? ''}" /></div>
+        <div class="col-6 col-md-3"><input name="baseHp" type="number" placeholder="基礎HP" class="form-control" value="${editingUnitData.baseHp ?? ''}" /></div>
+        <div class="col-6 col-md-3"><input name="partsIncreaseHp" type="number" placeholder="ﾊﾟｰﾂ増加HP" class="form-control" value="${editingUnitData.partsIncreaseHp ?? ''}" /></div>
         <div class="col-6 col-md-3"><input name="attack" type="number" placeholder="攻撃" class="form-control" value="${editingUnitData.attack ?? ''}" /></div>
         <div class="col-6 col-md-3"><input name="defense" type="number" placeholder="防御" class="form-control" value="${editingUnitData.defense ?? ''}" /></div>
         <div class="col-6 col-md-3"><input name="accuracy" type="number" placeholder="照準" class="form-control" value="${editingUnitData.accuracy ?? ''}" /></div>
         <div class="col-6 col-md-3"><input name="mobility" type="number" placeholder="運動" class="form-control" value="${editingUnitData.mobility ?? ''}" /></div>
         <div class="col-6 col-md-3"><input name="movement" type="number" placeholder="移動" class="form-control" value="${editingUnitData.movement ?? ''}" /></div>
-        <div class="col-6 col-md-3"><input name="speed" type="number" placeholder="速さ" class="form-control" value="${editingUnitData.speed ?? ''}" /></div>
+        <div class="col-6 col-md-3"><input name="speed" type="number" placeholder="ｽﾋﾟｰﾄﾞ" class="form-control" value="${editingUnitData.speed ?? ''}" /></div>
         <div class="col-12 mt-1">
           <div class="border rounded p-3 bg-light">
             <div class="fw-semibold mb-2">特殊能力</div>
@@ -505,6 +569,58 @@ function render() {
           ${editingUnit ? '<button type="button" id="cancel-unit-edit" class="btn btn-outline-secondary ms-2">キャンセル</button>' : ''}
         </div>
       </form>
+      </div>
+    </div>
+    ` : currentView === 'ranking' ? `
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-transparent border-0 pt-3">
+        <h2 class="h6 mb-0">重み付きランキング（機体+パイロット）</h2>
+      </div>
+      <div class="card-body">
+      ${scoredRankingRows.length === 0 ? `
+        <div class="text-muted small">パイロットが設定された機体がありません。</div>
+      ` : `
+      <div class="small text-muted mb-2">スコア重み: HP 15%、攻22%、防22%、照18%、運18%、移2.5%、速2.5%</div>
+      <div class="small text-muted mb-2">戦力値: 基礎HP/9 + パーツ増加HP×2/3 + 攻撃力 + 防御力 + 照準値×10 + 運動性×10</div>
+      <div class="table-responsive">
+      <table class="table table-sm table-striped table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th data-sort="unitName" class="sortable">機体</th>
+            <th data-sort="pilotName" class="sortable">パイロット</th>
+            <th data-sort="hp" class="sortable">HP</th>
+            <th data-sort="attack" class="sortable">攻撃力</th>
+            <th data-sort="defense" class="sortable">防御力</th>
+            <th data-sort="accuracy" class="sortable">照準値</th>
+            <th data-sort="mobility" class="sortable">運動性</th>
+            <th data-sort="movement" class="sortable">移動力</th>
+            <th data-sort="speed" class="sortable">スピード</th>
+            <th data-sort="combatPower" class="sortable">戦力値</th>
+            <th data-sort="score" class="sortable">スコア</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${scoredRankingRows.map((row, idx) => `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${row.unitName}</td>
+              <td>${row.pilotName}</td>
+              <td>${row.hp}</td>
+              <td>${row.attack}</td>
+              <td>${row.defense}</td>
+              <td>${row.accuracy}</td>
+              <td>${row.mobility}</td>
+              <td>${row.movement}</td>
+              <td>${row.speed}</td>
+              <td>${row.combatPower}</td>
+              <td class="fw-semibold">${row.score}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+      `}
       </div>
     </div>
     ` : ''}
@@ -604,6 +720,12 @@ function render() {
     equipOpen = false;
     render();
   };
+  document.getElementById('view-ranking').onclick = () => {
+    currentView = 'ranking';
+    setViewQuery(currentView);
+    equipOpen = false;
+    render();
+  };
 
   if (currentView === 'pilot') {
     document.getElementById('pilot-csv').onchange = handlePilotCSVImport;
@@ -686,6 +808,13 @@ function render() {
       };
     });
   } else if (currentView === 'skill') {
+    const skillFilterPilotSelect = document.getElementById('skill-filter-pilot');
+    if (skillFilterPilotSelect) {
+      skillFilterPilotSelect.onchange = () => {
+        skillFilterPilot = skillFilterPilotSelect.value || '';
+        render();
+      };
+    }
     document.getElementById('skill-csv').onchange = handleSkillCSVImport;
     document.getElementById('export-skill').onclick = handleSkillCSVExport;
     document.getElementById('skill-form').onsubmit = handleSkillFormSubmit;
@@ -702,7 +831,7 @@ function render() {
         render();
       };
     }
-  } else {
+  } else if (currentView === 'unit') {
     document.getElementById('unit-csv').onchange = handleUnitCSVImport;
     document.getElementById('export-unit').onclick = handleUnitCSVExport;
     document.getElementById('unit-form').onsubmit = handleUnitFormSubmit;
@@ -752,6 +881,8 @@ function render() {
         modal?.hide();
       };
     }
+  } else {
+    // ranking view: no page-specific action binding required
   }
 
   document.querySelectorAll('th.sortable').forEach(th => {
@@ -759,7 +890,9 @@ function render() {
     th.onclick = () => {
       const key = th.getAttribute('data-sort');
       if (!key) return;
-      const target = currentView === 'pilot' ? 'pilot' : (currentView === 'skill' ? 'skill' : 'unit');
+      const target = currentView === 'pilot'
+        ? 'pilot'
+        : (currentView === 'skill' ? 'skill' : (currentView === 'unit' ? 'unit' : 'ranking'));
       const current = sortState[target];
       if (current.key === key) {
         current.dir = current.dir === 'asc' ? 'desc' : 'asc';
@@ -966,13 +1099,22 @@ function parseUnitRow(row) {
     return ['S', 'A', 'B', 'C', 'D'].includes(rank) ? rank : 'C';
   };
 
+  const parsedBaseHp = Number(row.baseHp ?? row.baseHP ?? row.hpBase ?? 0);
+  const parsedPartsIncreaseHp = Number(row.partsIncreaseHp ?? row.partsHpIncrease ?? row.increaseHp ?? 0);
+  const parsedHp = Number(row.hp || 0);
+  const baseHp = parsedBaseHp || (parsedHp > 0 ? parsedHp : 0);
+  const partsIncreaseHp = parsedPartsIncreaseHp || Math.max(parsedHp - baseHp, 0);
+  const hp = parsedHp || (baseHp + partsIncreaseHp);
+
   return {
     id: row.id || '',
     name: row.name || '',
     pilotId: row.pilotId || '',
     size: row.size || '',
     type: row.type || '',
-    hp: Number(row.hp || 0),
+    hp,
+    baseHp,
+    partsIncreaseHp,
     attack: Number(row.attack || 0),
     defense: Number(row.defense || 0),
     accuracy: Number(row.accuracy || 0),
@@ -1027,6 +1169,8 @@ function flattenUnitForCSV(u) {
     size: unit.size || '',
     type: unit.type || '',
     hp: unit.hp || 0,
+    baseHp: unit.baseHp || 0,
+    partsIncreaseHp: unit.partsIncreaseHp || 0,
     attack: unit.attack || 0,
     defense: unit.defense || 0,
     accuracy: unit.accuracy || 0,
@@ -1152,6 +1296,11 @@ function handleUnitFormSubmit(e) {
   const formData = new FormData(form);
   let updated = false;
 
+  const hpInputRaw = String(formData.get('hp') ?? '').trim();
+  const baseHp = Number(formData.get('baseHp')) || 0;
+  const partsIncreaseHp = Number(formData.get('partsIncreaseHp')) || 0;
+  const hp = hpInputRaw === '' ? (baseHp + partsIncreaseHp) : (Number(hpInputRaw) || 0);
+
   const maxId = state.units.reduce((max, u) => {
     const idNum = Number(u.id || u.data?.id);
     return !isNaN(idNum) && idNum > max ? idNum : max;
@@ -1161,7 +1310,9 @@ function handleUnitFormSubmit(e) {
     name: formData.get('name') || '',
     size: formData.get('size') || '',
     type: formData.get('type') || '',
-    hp: Number(formData.get('hp')) || 0,
+    hp,
+    baseHp,
+    partsIncreaseHp,
     attack: Number(formData.get('attack')) || 0,
     defense: Number(formData.get('defense')) || 0,
     accuracy: Number(formData.get('accuracy')) || 0,
