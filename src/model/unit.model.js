@@ -1,3 +1,6 @@
+import Terrain from './terrain.model.js';
+import Weapon from './weapon.model.js';
+
 // 機体
 class Unit {
   static get TYPE_ATTACK() {
@@ -100,6 +103,10 @@ class Unit {
     return this.data.name;
   }
 
+  get pilotId() {
+    return this.data.pilotId || '';
+  }
+
   get size() {
     return this.data.size;
   }
@@ -109,14 +116,28 @@ class Unit {
   }
 
   get terrain() {
-    return (
-      this.data.terrain || [
-        new Terrain({ type: Terrain.TYPE_LAND, rank: Terrain.RANK_C }),
-        new Terrain({ type: Terrain.TYPE_SEA, rank: Terrain.RANK_C }),
-        new Terrain({ type: Terrain.TYPE_AIR, rank: Terrain.RANK_C }),
-        new Terrain({ type: Terrain.TYPE_SPACE, rank: Terrain.RANK_C }),
-      ]
-    );
+    const terrain = this.data.terrain;
+    if (Array.isArray(terrain)) {
+      return terrain;
+    }
+    if (terrain && typeof terrain === 'object') {
+      return [
+        new Terrain({ data: { type: Terrain.TYPE_AIR, rank: terrain.air || Terrain.RANK_C } }),
+        new Terrain({ data: { type: Terrain.TYPE_LAND, rank: terrain.land || Terrain.RANK_C } }),
+        new Terrain({ data: { type: Terrain.TYPE_SEA, rank: terrain.sea || Terrain.RANK_C } }),
+        new Terrain({ data: { type: Terrain.TYPE_SPACE, rank: terrain.space || Terrain.RANK_C } }),
+      ];
+    }
+    return [
+      new Terrain({ data: { type: Terrain.TYPE_LAND, rank: Terrain.RANK_C } }),
+      new Terrain({ data: { type: Terrain.TYPE_SEA, rank: Terrain.RANK_C } }),
+      new Terrain({ data: { type: Terrain.TYPE_AIR, rank: Terrain.RANK_C } }),
+      new Terrain({ data: { type: Terrain.TYPE_SPACE, rank: Terrain.RANK_C } }),
+    ];
+  }
+
+  get specialAbility() {
+    return this.data.specialAbility || { name: '', effect: '' };
   }
 
   get hp() {
@@ -148,7 +169,16 @@ class Unit {
   }
 
   get normalWeapon() {
-    return this.data.normalWeapon || {};
+    const weapon = this.data.normalWeapon || {};
+    return new Weapon({
+      data: {
+        name: weapon.name || '',
+        type: weapon.type || '',
+        range: weapon.range || { min: 0, max: 0 },
+        action: weapon.action ?? '',
+        uses: weapon.uses ?? '',
+      }
+    });
   }
 }
 export default Unit;
