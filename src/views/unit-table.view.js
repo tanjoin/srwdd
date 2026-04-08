@@ -1,4 +1,4 @@
-export function renderUnitTable({ sortedUnits, pilotById }) {
+export function renderUnitTable({ sortedUnits, pilotById, unitPartById, abilityChipById }) {
   return `
     <div class="card border-0 shadow-sm rounded-4 mb-4">
       <div class="card-header bg-transparent border-0 pt-3">
@@ -14,6 +14,7 @@ export function renderUnitTable({ sortedUnits, pilotById }) {
         <thead class="table-light">
           <tr>
             <th rowspan="3" data-sort="id" class="sortable">ID</th><th rowspan="3" data-sort="name" class="sortable">名前</th><th rowspan="3" data-sort="pilotId" class="sortable">パイロット</th>
+            <th rowspan="3">チップ</th><th rowspan="3">MAIN</th><th rowspan="3">必1</th><th rowspan="3">必2</th><th rowspan="3">SUB</th>
             <th rowspan="3" data-sort="size" class="sortable">サイズ</th><th rowspan="3" data-sort="type" class="sortable">タイプ</th><th rowspan="3" data-sort="hp" class="sortable">HP</th>
             <th rowspan="3" data-sort="attack" class="sortable">攻撃力</th><th rowspan="3" data-sort="defense" class="sortable">防御力</th><th rowspan="3" data-sort="accuracy" class="sortable">照準値</th>
             <th rowspan="3" data-sort="mobility" class="sortable">運動性</th><th rowspan="3" data-sort="movement" class="sortable">移動</th><th rowspan="3" data-sort="speed" class="sortable">ｽﾋﾟｰﾄﾞ</th>
@@ -27,15 +28,20 @@ export function renderUnitTable({ sortedUnits, pilotById }) {
         <tbody>
           ${sortedUnits.map((u) => {
             const pilot = pilotById.get(String(u.pilotId));
+            const loadout = u.loadout || {};
+            const subNames = [loadout.subPart1Id, loadout.subPart2Id, loadout.subPart3Id, loadout.subPart4Id]
+              .map((id) => unitPartById.get(String(id))?.name)
+              .filter(Boolean)
+              .join(', ');
             return `
             <tr>
-              <td>${u.id || ''}</td><td>${u.name || ''}</td><td>${pilot?.name || ''}</td><td>${u.size || ''}</td><td>${u.type || ''}</td><td>${u.hp || 0}</td>
+              <td>${u.id || ''}</td><td>${u.name || ''}</td><td>${pilot?.name || ''}</td><td>${abilityChipById.get(String(loadout.abilityChipId))?.name || ''}</td><td>${unitPartById.get(String(loadout.mainPartId))?.name || ''}</td><td>${unitPartById.get(String(loadout.finisherPart1Id))?.name || ''}</td><td>${unitPartById.get(String(loadout.finisherPart2Id))?.name || ''}</td><td>${subNames}</td><td>${u.size || ''}</td><td>${u.type || ''}</td><td>${u.hp || 0}</td>
               <td>${u.attack || 0}</td><td>${u.defense || 0}</td><td>${u.accuracy || 0}</td><td>${u.mobility || 0}</td><td>${u.movement || 0}</td><td>${u.speed || 0}</td>
               <td>${u.specialAbility?.name || ''}</td><td>${u.specialAbility?.effect || ''}</td><td>${u.data?.terrain?.air || 'C'}</td><td>${u.data?.terrain?.land || 'C'}</td><td>${u.data?.terrain?.sea || 'C'}</td><td>${u.data?.terrain?.space || 'C'}</td>
               <td>${u.normalWeapon?.name || ''}</td><td>${u.normalWeapon?.type || ''}</td><td>${u.normalWeapon?.range?.min || 0}</td><td>${u.normalWeapon?.range?.max || 0}</td><td>${u.normalWeapon?.action || 0}</td><td>${u.normalWeapon?.uses || 0}</td>
               <td class="text-center">
                 <button class="unit-edit btn btn-sm btn-outline-secondary" data-id="${u.id}" title="更新" aria-label="更新"><i class="bi bi-pencil"></i></button>
-                <button class="unit-select-pilot btn btn-sm btn-outline-secondary" data-id="${u.id}" title="パイロット選択" aria-label="パイロット選択"><i class="bi bi-person"></i></button>
+                <button class="unit-select-pilot btn btn-sm btn-outline-secondary" data-id="${u.id}" title="編成" aria-label="編成"><i class="bi bi-person"></i></button>
                 <button class="unit-delete btn btn-sm btn-danger" data-id="${u.id}" title="削除" aria-label="削除"><i class="bi bi-trash"></i></button>
               </td>
             </tr>

@@ -28,5 +28,15 @@ export function scoreAndSortRankingRows({ rankingRows, rankingSort, compareValue
         score: Number((score * 100).toFixed(2)),
       };
     })
-    .sort((a, b) => compareValues(a, b, rankingSort.key, rankingSort.dir));
+    .sort((a, b) => {
+      const primary = compareValues(a, b, rankingSort.key, rankingSort.dir);
+      if (primary !== 0) return primary;
+      if (Number(b.finisherCount || 0) !== Number(a.finisherCount || 0)) {
+        return Number(b.finisherCount || 0) - Number(a.finisherCount || 0);
+      }
+      if (Number(b.combinationSize || 0) !== Number(a.combinationSize || 0)) {
+        return Number(b.combinationSize || 0) - Number(a.combinationSize || 0);
+      }
+      return String(a.unitName || '').localeCompare(String(b.unitName || ''), 'ja');
+    });
 }

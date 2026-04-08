@@ -1,14 +1,20 @@
 import { renderPilotPage } from './pilot-page.view.js';
 import { renderSkillPage } from './skill-page.view.js';
 import { renderUnitPage } from './unit-page.view.js';
+import { renderUnitPartsSection } from './unit-parts.view.js';
+import { renderAbilityChipSection } from './ability-chip.view.js';
 import { renderRankingPage } from './ranking-page.view.js';
+import { renderOptimizerPage } from './optimizer-page.view.js';
 import { renderPilotModal, renderUnitModal } from './modals.view.js';
 
 function renderCurrentPage(vm) {
   if (vm.currentView === 'pilot') return renderPilotPage(vm);
   if (vm.currentView === 'skill') return renderSkillPage(vm);
   if (vm.currentView === 'unit') return renderUnitPage(vm);
+  if (vm.currentView === 'unitPart') return renderUnitPartsSection(vm);
+  if (vm.currentView === 'abilityChip') return renderAbilityChipSection(vm);
   if (vm.currentView === 'ranking') return renderRankingPage(vm);
+  if (vm.currentView === 'optimizer') return renderOptimizerPage(vm);
   return '';
 }
 
@@ -29,17 +35,20 @@ export function buildAppHtml(vm) {
   return `
     <div class="app-shell">
       <nav class="navbar navbar-expand sticky-top app-navbar">
-        <div class="container">
+        <div class="container-fluid app-frame">
           <span class="navbar-brand app-title">SRWDD</span>
           <ul class="nav nav-pills app-tabs">
             <li class="nav-item"><button id="view-pilot" class="nav-link ${vm.currentView === 'pilot' ? 'active' : ''}" type="button">パイロット</button></li>
             <li class="nav-item"><button id="view-skill" class="nav-link ${vm.currentView === 'skill' ? 'active' : ''}" type="button">スキル</button></li>
             <li class="nav-item"><button id="view-unit" class="nav-link ${vm.currentView === 'unit' ? 'active' : ''}" type="button">機体</button></li>
+            <li class="nav-item"><button id="view-unit-part" class="nav-link ${vm.currentView === 'unitPart' ? 'active' : ''}" type="button">ユニットパーツ</button></li>
+            <li class="nav-item"><button id="view-ability-chip" class="nav-link ${vm.currentView === 'abilityChip' ? 'active' : ''}" type="button">アビリティチップ</button></li>
             <li class="nav-item"><button id="view-ranking" class="nav-link ${vm.currentView === 'ranking' ? 'active' : ''}" type="button">ランキング</button></li>
+            <li class="nav-item"><button id="view-optimizer" class="nav-link ${vm.currentView === 'optimizer' ? 'active' : ''}" type="button">最適化</button></li>
           </ul>
         </div>
       </nav>
-      <div class="container py-4 app-content">
+      <div class="container-fluid py-4 app-content app-frame">
         ${renderCurrentPage(vm)}
         ${renderPilotModal(vm)}
         ${renderUnitModal(vm)}

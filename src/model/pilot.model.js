@@ -1,3 +1,5 @@
+import SkillEffectParser from './skill-effect-parser.model.js';
+
 class Pilot {
   constructor(options, skillList = []) {
     if (options) {
@@ -72,19 +74,50 @@ class Pilot {
   get specialSkillMobility() {
     return this._sumSpecialSkill('mobility');
   }
+
+  get textEffectRateBonuses() {
+    return this._getMatchedEquippedSkills().reduce((acc, skill) => {
+      const bonuses = SkillEffectParser.extractParameterRateBonuses(skill?.effect || '');
+      acc.attack += bonuses.attack;
+      acc.defense += bonuses.defense;
+      acc.accuracy += bonuses.accuracy;
+      acc.mobility += bonuses.mobility;
+      return acc;
+    }, SkillEffectParser.createEmptyBonusSet());
+  }
+
+  get textEffectAttackRate() {
+    return this.textEffectRateBonuses.attack;
+  }
+
+  get textEffectDefenseRate() {
+    return this.textEffectRateBonuses.defense;
+  }
+
+  get textEffectAccuracyRate() {
+    return this.textEffectRateBonuses.accuracy;
+  }
+
+  get textEffectMobilityRate() {
+    return this.textEffectRateBonuses.mobility;
+  }
+
   _sumSpecialSkill(key) {
-    if (!this.skillList) return 0;
+    return this._getMatchedEquippedSkills().reduce((acc, skill) => acc + (Number(skill?.[key]) || 0), 0);
+  }
+
+  _getMatchedEquippedSkills() {
+    if (!this.skillList) return [];
     const pilotName = (this.name || '').trim();
-    if (!pilotName) return 0;
+    if (!pilotName) return [];
     const equipped = new Set(this.equippedSkillIds.map(String));
-    if (equipped.size === 0) return 0;
-    const matched = this.skillList.filter(s => {
-      const skillId = s?.id != null ? String(s.id) : '';
+    if (equipped.size === 0) return [];
+    return this.skillList.filter((skill) => {
+      const skillId = skill?.id != null ? String(skill.id) : '';
       if (!equipped.has(skillId)) return false;
-      const names = Array.isArray(s.pilotNames) ? s.pilotNames : [];
-      return names.some(n => n.includes(pilotName));
+      const names = Array.isArray(skill.pilotNames) ? skill.pilotNames : [];
+      return names.some((name) => name.includes(pilotName));
     });
-    return matched.reduce((acc, s) => acc + (Number(s[key]) || 0), 0);
   }
 
   // 精神
@@ -109,5 +142,6 @@ class Pilot {
   get totalMobility() {
     return this.baseMobility + this.basicSkillMobility + this.specialSkillMobility;
   }
+
 }
 export default Pilot;

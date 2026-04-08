@@ -13,5 +13,8 @@ export function bindTabs({ setCurrentView, setViewQuery, setEquipOpen, render })
   bind('view-pilot', 'pilot');
   bind('view-skill', 'skill');
   bind('view-unit', 'unit');
+  bind('view-unit-part', 'unitPart');
+  bind('view-ability-chip', 'abilityChip');
   bind('view-ranking', 'ranking');
+  bind('view-optimizer', 'optimizer');
 }

@@ -1,5 +1,5 @@
 function normalizeView(view) {
-  return ['pilot', 'skill', 'unit', 'ranking'].includes(view) ? view : 'pilot';
+  return ['pilot', 'skill', 'unit', 'unitPart', 'abilityChip', 'ranking', 'optimizer'].includes(view) ? view : 'pilot';
 }
 
 export function getViewFromQuery() {

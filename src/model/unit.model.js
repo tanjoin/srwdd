@@ -107,6 +107,19 @@ class Unit {
     return this.data.pilotId || '';
   }
 
+  get loadout() {
+    return this.data.loadout || {
+      abilityChipId: '',
+      mainPartId: '',
+      finisherPart1Id: '',
+      finisherPart2Id: '',
+      subPart1Id: '',
+      subPart2Id: '',
+      subPart3Id: '',
+      subPart4Id: '',
+    };
+  }
+
   get size() {
     return this.data.size;
   }

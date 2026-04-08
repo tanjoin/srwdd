@@ -1,4 +1,6 @@
 import Unit from '../model/unit.model.js';
+import Weapon from '../model/weapon.model.js';
+import AbilityChip from '../model/ability-chips.model.js';
 
 export function compareValues(a, b, key, dir) {
   const av = normalizeSortValue(a, key);
@@ -30,6 +32,25 @@ function normalizeSortValue(obj, key) {
       const num = Number(raw);
       return Number.isNaN(num) ? String(raw ?? '').toLowerCase() : num;
     }
+  }
+  if (obj instanceof Weapon) {
+    if (key === 'unitId' || key === 'unitIds') return String((obj.unitIds || []).join(',')).toLowerCase();
+    if (key === 'rarity') return String(obj.rarity || '').toLowerCase();
+    if (key === 'spiritCommandName') return String(obj.spiritCommand?.name || '').toLowerCase();
+    if (key === 'terrainAir') return String(obj.terrain?.air || '');
+    if (key === 'terrainLand') return String(obj.terrain?.land || '');
+    if (key === 'terrainSea') return String(obj.terrain?.sea || '');
+    if (key === 'terrainSpace') return String(obj.terrain?.space || '');
+    if (key === 'rangeMin') return Number(obj.range?.min || 0);
+    if (key === 'rangeMax') return Number(obj.range?.max || 0);
+    if (key === 'mainName') return String(obj.mainSlot?.name || '').toLowerCase();
+    if (key === 'finisherName') return String(obj.finisherSlot?.name || '').toLowerCase();
+    if (key === 'subName') return String(obj.subSlot?.name || '').toLowerCase();
+  }
+  if (obj instanceof AbilityChip) {
+    if (key === 'baseAbility') return String((obj.baseAbility || []).join(',')).toLowerCase();
+    if (key === 'exAbility') return String((obj.exAbility || []).join(',')).toLowerCase();
+    if (key === 'spAbility') return String((obj.spAbility || []).join(',')).toLowerCase();
   }
   const value = obj?.[key];
   if (Array.isArray(value)) return value.join(',');

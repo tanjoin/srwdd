@@ -7,6 +7,10 @@ export function bindDeleteButtons({
   setEditingSkillId,
   getEditingUnitId,
   setEditingUnitId,
+  getEditingUnitPartId,
+  setEditingUnitPartId,
+  getEditingAbilityChipId,
+  setEditingAbilityChipId,
   getSelectedUnitId,
   setSelectedUnitId,
 }) {
@@ -50,6 +54,45 @@ export function bindDeleteButtons({
         if (String(getEditingUnitId()) === String(id)) setEditingUnitId(null);
         if (String(getSelectedUnitId()) === String(id)) setSelectedUnitId(null);
         state.units.splice(idx, 1);
+        saveState();
+        render();
+      }
+    };
+  });
+
+  document.querySelectorAll('.unit-part-delete').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-id');
+      const idx = state.unitPartsList.findIndex(item => String(item.id || item.data?.id) === String(id));
+      if (idx !== -1) {
+        if (String(getEditingUnitPartId()) === String(id)) setEditingUnitPartId(null);
+        state.unitPartsList.splice(idx, 1);
+        state.units.forEach((unit) => {
+          const loadout = unit.data?.loadout;
+          if (!loadout) return;
+          Object.keys(loadout).forEach((key) => {
+            if (String(loadout[key]) === String(id)) loadout[key] = '';
+          });
+        });
+        saveState();
+        render();
+      }
+    };
+  });
+
+  document.querySelectorAll('.ability-chip-delete').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-id');
+      const idx = state.abilityChips.findIndex(item => String(item.id || item.data?.id) === String(id));
+      if (idx !== -1) {
+        if (String(getEditingAbilityChipId()) === String(id)) setEditingAbilityChipId(null);
+        state.abilityChips.splice(idx, 1);
+        state.units.forEach((unit) => {
+          const loadout = unit.data?.loadout;
+          if (loadout && String(loadout.abilityChipId) === String(id)) {
+            loadout.abilityChipId = '';
+          }
+        });
         saveState();
         render();
       }

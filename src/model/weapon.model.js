@@ -24,8 +24,54 @@ class Weapon {
     return this.data.name;
   }
 
+  get unitId() {
+    return this.data.unitId || '';
+  }
+
+  get unitIds() {
+    if (Array.isArray(this.data.unitIds)) return this.data.unitIds;
+    if (this.data.unitId) return [this.data.unitId];
+    return [];
+  }
+
+  get pilotId() {
+    return this.data.pilotId || '';
+  }
+
+  get rarity() {
+    return this.data.rarity || '';
+  }
+
+  get isSupportCategory() {
+    return Boolean(this.data.isSupportCategory) || this.data.type === Weapon.TYPE_SUPPORT;
+  }
+
   get type() {
     return this.data.type;
+  }
+
+  // HP
+  get hp() {
+    return this.data.hp || 0;
+  }
+
+  get terrain() {
+    return this.data.terrain || {
+      air: '',
+      land: '',
+      sea: '',
+      space: '',
+    };
+  }
+
+  get map() {
+    return this.data.map || {
+      enabled: false,
+      label: '',
+      image: '',
+      target: '',
+      areaType: '',
+    };
   }
 
   // 攻撃
@@ -46,16 +92,6 @@ class Weapon {
   // 運動性
   get mobility() {
     return this.data.mobility || 0;
-  }
-
-  // 移動力
-  get movement() {
-    return this.data.movement || 0;
-  }
-
-  // スピード
-  get speed() {
-    return this.data.speed || 0;
   }
 
   // 特性
@@ -86,6 +122,14 @@ class Weapon {
   // 回数
   get uses() {
     return this.data.uses || 0;
+  }
+
+  get spiritCommand() {
+    return this.data.spiritCommand || {
+      name: '',
+      uses: '',
+      description: '',
+    };
   }
 
   // MAIN

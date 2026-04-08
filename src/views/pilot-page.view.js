@@ -22,6 +22,7 @@ export function renderPilotPage({ sortedPilots }) {
             <th colspan="4">基本スキル</th>
             <th colspan="4">特殊スキル</th>
             <th colspan="4">合計</th>
+            <th colspan="4">効果率</th>
             <th rowspan="2" class="text-center">操作</th>
           </tr>
           <tr>
@@ -29,6 +30,7 @@ export function renderPilotPage({ sortedPilots }) {
             <th data-sort="basicSkillAttack" class="sortable">攻</th><th data-sort="basicSkillDefense" class="sortable">防</th><th data-sort="basicSkillAccuracy" class="sortable">照</th><th data-sort="basicSkillMobility" class="sortable">運</th>
             <th data-sort="specialSkillAttack" class="sortable">攻</th><th data-sort="specialSkillDefense" class="sortable">防</th><th data-sort="specialSkillAccuracy" class="sortable">照</th><th data-sort="specialSkillMobility" class="sortable">運</th>
             <th data-sort="totalAttack" class="sortable">攻</th><th data-sort="totalDefense" class="sortable">防</th><th data-sort="totalAccuracy" class="sortable">照</th><th data-sort="totalMobility" class="sortable">運</th>
+            <th data-sort="textEffectAttackRate" class="sortable">攻</th><th data-sort="textEffectDefenseRate" class="sortable">防</th><th data-sort="textEffectAccuracyRate" class="sortable">照</th><th data-sort="textEffectMobilityRate" class="sortable">運</th>
           </tr>
         </thead>
         <tbody>
@@ -40,6 +42,7 @@ export function renderPilotPage({ sortedPilots }) {
               <td>${p.basicSkillAttack}</td><td>${p.basicSkillDefense}</td><td>${p.basicSkillAccuracy}</td><td>${p.basicSkillMobility}</td>
               <td>${p.specialSkillAttack}</td><td>${p.specialSkillDefense}</td><td>${p.specialSkillAccuracy}</td><td>${p.specialSkillMobility}</td>
               <td>${p.totalAttack}</td><td>${p.totalDefense}</td><td>${p.totalAccuracy}</td><td>${p.totalMobility}</td>
+              <td>${p.textEffectAttackRate}%</td><td>${p.textEffectDefenseRate}%</td><td>${p.textEffectAccuracyRate}%</td><td>${p.textEffectMobilityRate}%</td>
               <td class="text-center">
                 <button class="pilot-equip btn btn-sm btn-outline-secondary" data-id="${p.id}" title="装備" aria-label="装備"><i class="bi bi-gear"></i></button>
                 <button class="pilot-delete btn btn-sm btn-danger" data-index="${i}" title="削除" aria-label="削除"><i class="bi bi-trash"></i></button>

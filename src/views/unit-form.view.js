@@ -31,8 +31,8 @@ export function renderUnitForm({ editingUnit, editingUnitData, editingUnitSpecia
         <div class="col-12 mt-1"><div class="border rounded p-3 bg-light"><div class="fw-semibold mb-2">通常攻撃</div><div class="row g-2">
           <div class="col-12 col-md-3"><input name="normalWeaponName" placeholder="名前" class="form-control" value="${escapeHtml(editingUnitWeapon.name || '')}" /></div>
           <div class="col-12 col-md-3"><input name="normalWeaponType" placeholder="タイプ" class="form-control" value="${escapeHtml(editingUnitWeapon.type || '')}" /></div>
-          <div class="col-6 col-md-2"><input name="normalWeaponRangeMin" type="number" placeholder="射程（min）" class="form-control" value="${editingUnitRange.min ?? ''}" /></div>
-          <div class="col-6 col-md-2"><input name="normalWeaponRangeMax" type="number" placeholder="射程（max）" class="form-control" value="${editingUnitRange.max ?? ''}" /></div>
+          <div class="col-6 col-md-1"><input name="normalWeaponRangeMin" type="number" placeholder="射程min" class="form-control" value="${editingUnitRange.min ?? ''}" /></div>
+          <div class="col-6 col-md-1"><input name="normalWeaponRangeMax" type="number" placeholder="射程max" class="form-control" value="${editingUnitRange.max ?? ''}" /></div>
           <div class="col-6 col-md-1"><input name="normalWeaponAction" type="text" inputmode="numeric" placeholder="アク" class="form-control" value="${editingUnitWeapon.action ?? ''}" /></div>
           <div class="col-6 col-md-1"><input name="normalWeaponUses" type="text" inputmode="numeric" placeholder="回数" class="form-control" value="${editingUnitWeapon.uses ?? ''}" /></div>
         </div></div></div>

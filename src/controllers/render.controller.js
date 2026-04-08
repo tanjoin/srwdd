@@ -14,6 +14,8 @@ export function renderApp({
   compareValues,
   buildPilot,
   buildUnit,
+  buildUnitPart,
+  buildAbilityChip,
   Skill,
   setViewQuery,
   csvHandlers,
@@ -28,6 +30,8 @@ export function renderApp({
     compareValues,
     buildPilot,
     buildUnit,
+    buildUnitPart,
+    buildAbilityChip,
     Skill,
   });
 
@@ -64,7 +68,7 @@ export function renderApp({
       onSkillCsvExport: csvHandlers.handleSkillCSVExport,
       onSkillFormSubmit: formHandlers.handleSkillFormSubmit,
     });
-  } else if (uiState.currentView === 'unit') {
+  } else if (['unit', 'unitPart', 'abilityChip'].includes(uiState.currentView)) {
     bindUnitView({
       state,
       render,
@@ -73,11 +77,21 @@ export function renderApp({
       getSelectedUnitId: () => uiState.selectedUnitId,
       setSelectedUnitId: (value) => setUiState({ selectedUnitId: value }),
       setEditingUnitId: (value) => setUiState({ editingUnitId: value }),
+      getEditingUnitPartId: () => uiState.editingUnitPartId,
+      setEditingUnitPartId: (value) => setUiState({ editingUnitPartId: value }),
+      getEditingAbilityChipId: () => uiState.editingAbilityChipId,
+      setEditingAbilityChipId: (value) => setUiState({ editingAbilityChipId: value }),
       getUnitPilotOpen: () => uiState.unitPilotOpen,
       setUnitPilotOpen: (value) => setUiState({ unitPilotOpen: value }),
       onUnitCsvImport: csvHandlers.handleUnitCSVImport,
       onUnitCsvExport: csvHandlers.handleUnitCSVExport,
       onUnitFormSubmit: formHandlers.handleUnitFormSubmit,
+      onUnitPartCsvImport: csvHandlers.handleUnitPartCSVImport,
+      onUnitPartCsvExport: csvHandlers.handleUnitPartCSVExport,
+      onUnitPartFormSubmit: formHandlers.handleUnitPartFormSubmit,
+      onAbilityChipCsvImport: csvHandlers.handleAbilityChipCSVImport,
+      onAbilityChipCsvExport: csvHandlers.handleAbilityChipCSVExport,
+      onAbilityChipFormSubmit: formHandlers.handleAbilityChipFormSubmit,
     });
   }
 
@@ -96,6 +110,10 @@ export function renderApp({
     setEditingSkillId: (value) => setUiState({ editingSkillId: value }),
     getEditingUnitId: () => uiState.editingUnitId,
     setEditingUnitId: (value) => setUiState({ editingUnitId: value }),
+    getEditingUnitPartId: () => uiState.editingUnitPartId,
+    setEditingUnitPartId: (value) => setUiState({ editingUnitPartId: value }),
+    getEditingAbilityChipId: () => uiState.editingAbilityChipId,
+    setEditingAbilityChipId: (value) => setUiState({ editingAbilityChipId: value }),
     getSelectedUnitId: () => uiState.selectedUnitId,
     setSelectedUnitId: (value) => setUiState({ selectedUnitId: value }),
   });

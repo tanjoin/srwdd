@@ -1,4 +1,30 @@
 import { escapeHtml } from '../services/ui.service.js';
+import SkillEffectParser from '../model/skill-effect-parser.model.js';
+
+const EFFECT_PARAM_CLASS_MAP = {
+  攻撃力: 'skill-param-attack',
+  防御力: 'skill-param-defense',
+  照準値: 'skill-param-accuracy',
+  運動性: 'skill-param-mobility',
+};
+
+function renderHighlightedEffect(effectText = '') {
+  const clauses = String(effectText).match(/[^。]+。?/g) || [];
+  const rateEffectPattern = new RegExp(SkillEffectParser.rateEffectPattern.source);
+
+  return clauses.map((clause) => {
+    const escapedClause = escapeHtml(clause);
+
+    if (!SkillEffectParser.isClauseParseable(clause) || !rateEffectPattern.test(clause)) {
+      return escapedClause;
+    }
+
+    return escapedClause.replace(SkillEffectParser.highlightableLabelPattern, (label) => {
+      const className = EFFECT_PARAM_CLASS_MAP[label] || '';
+      return `<span class="skill-effect-param ${className}">${label}</span>`;
+    });
+  }).join('');
+}
 
 export function renderSkillPage({ pilots, filteredSkills, editingSkill, editingSkillData, editingPilotNamesValue, skillFilterPilot }) {
   return `
@@ -23,16 +49,18 @@ export function renderSkillPage({ pilots, filteredSkills, editingSkill, editingS
           <th data-sort="accuracy" class="sortable">照準</th><th data-sort="mobility" class="sortable">運動</th><th class="text-center">操作</th>
         </tr></thead>
         <tbody>
-          ${filteredSkills.map((s) => `
+          ${filteredSkills.map((s) => {
+            return `
             <tr>
-              <td>${s.id || ''}</td><td>${s.name || ''}</td><td>${s.pilotNames?.join(', ') || ''}</td><td>${s.effect || ''}</td>
+              <td>${s.id || ''}</td><td>${escapeHtml(s.name || '')}</td><td>${escapeHtml(s.pilotNames?.join(', ') || '')}</td><td>${renderHighlightedEffect(s.effect || '')}</td>
               <td>${s.attack || 0}</td><td>${s.defense || 0}</td><td>${s.accuracy || 0}</td><td>${s.mobility || 0}</td>
               <td class="text-center">
                 <button class="skill-edit btn btn-sm btn-outline-secondary" data-id="${s.id}" title="更新" aria-label="更新"><i class="bi bi-pencil"></i></button>
                 <button class="skill-delete btn btn-sm btn-danger" data-id="${s.id}" title="削除" aria-label="削除"><i class="bi bi-trash"></i></button>
               </td>
             </tr>
-          `).join('')}
+          `;
+          }).join('')}
         </tbody>
       </table></div></div>
     </div>

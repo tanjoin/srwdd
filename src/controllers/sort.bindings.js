@@ -4,11 +4,13 @@ export function bindSortHeaders({ sortState, getCurrentView, render }) {
     th.onclick = () => {
       const key = th.getAttribute('data-sort');
       if (!key) return;
+      const explicitTarget = th.getAttribute('data-sort-target');
       const currentView = getCurrentView();
-      const target = currentView === 'pilot'
+      const target = explicitTarget || (currentView === 'pilot'
         ? 'pilot'
-        : (currentView === 'skill' ? 'skill' : (currentView === 'unit' ? 'unit' : 'ranking'));
+        : (currentView === 'skill' ? 'skill' : (currentView === 'unit' ? 'unit' : 'ranking')));
       const current = sortState[target];
+      if (!current) return;
       if (current.key === key) {
         current.dir = current.dir === 'asc' ? 'desc' : 'asc';
       } else {
