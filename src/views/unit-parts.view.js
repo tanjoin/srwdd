@@ -52,20 +52,26 @@ function renderExpandableCell(contentHtml = '', plainText = '', summaryLabel = '
 
 function renderHighlightedEffect(effectText = '') {
   const clauses = String(effectText).match(/[^。]+。?/g) || [];
-  const rateEffectPattern = new RegExp(SkillEffectParser.rateEffectPattern.source);
 
   return clauses.map((clause) => {
-    const escapedClause = escapeHtml(clause);
-
-    if (!SkillEffectParser.isClauseParseable(clause) || !rateEffectPattern.test(clause)) {
-      return escapedClause;
-    }
-
-    return escapedClause.replace(SkillEffectParser.highlightableLabelPattern, (label) => {
-      const className = EFFECT_PARAM_CLASS_MAP[label] || '';
-      return `<span class="skill-effect-param ${className}">${label}</span>`;
-    });
+    return renderHighlightedClause(clause);
   }).join('');
+}
+
+function renderHighlightedClause(clause = '') {
+  const ranges = SkillEffectParser.getHighlightableLabelRanges(clause);
+  if (ranges.length === 0) {
+    return escapeHtml(clause);
+  }
+
+  let cursor = 0;
+  return ranges.map((range) => {
+    const before = escapeHtml(clause.slice(cursor, range.start));
+    const className = EFFECT_PARAM_CLASS_MAP[range.label] || '';
+    const highlighted = `<span class="skill-effect-param ${className}">${escapeHtml(range.label)}</span>`;
+    cursor = range.end;
+    return before + highlighted;
+  }).join('') + escapeHtml(clause.slice(cursor));
 }
 
 export function renderUnitPartsSection({

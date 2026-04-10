@@ -2,8 +2,8 @@ import { buildRankingRows } from './ranking-rows.service.js';
 import { scoreAndSortRankingRows } from './ranking-score.service.js';
 import { buildOptimizerRows } from './unit-part-optimizer.service.js';
 
-export function buildScoredRankingRows({ units, pilotById, unitPartsList, rankingSort, compareValues }) {
-  const rankingRows = buildRankingRows({ units, pilotById, unitPartsList });
+export function buildScoredRankingRows({ units, pilotById, unitPartsList, rankingSort, compareValues, selectedMorale = 100 }) {
+  const rankingRows = buildRankingRows({ units, pilotById, unitPartsList, selectedMorale });
   return scoreAndSortRankingRows({ rankingRows, rankingSort, compareValues });
 }
 
@@ -29,8 +29,8 @@ export function buildBestUnitRankingRows(scoredRankingRows) {
   });
 }
 
-export function buildUnitPartOptimizerRows({ units, pilotById, unitPartsList }) {
-  return buildOptimizerRows({ units, pilotById, unitPartsList });
+export function buildUnitPartOptimizerRows({ units, pilotById, unitPartsList, selectedMorale = 100 }) {
+  return buildOptimizerRows({ units, pilotById, unitPartsList, selectedMorale });
 }
 
 function isBetterRankingRow(candidate, current) {

@@ -27,6 +27,7 @@ let uiState = {
   editingUnitId: null,
   editingUnitPartId: null,
   editingAbilityChipId: null,
+  selectedMorale: 100,
   skillFilterPilot: '',
   equipOpen: false,
   unitPilotOpen: false,

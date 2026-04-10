@@ -2,6 +2,7 @@ import { buildAppHtml } from '../views/app.view.js';
 import { buildRenderViewModel } from '../services/render-vm.service.js';
 import { bindTabs, bindSortHeaders, bindDeleteButtons } from './common.bindings.js';
 import { bindPilotView } from './pilot.bindings.js';
+import { bindRankingView } from './ranking.bindings.js';
 import { bindSkillView } from './skill.bindings.js';
 import { bindUnitView } from './unit.bindings.js';
 
@@ -67,6 +68,12 @@ export function renderApp({
       onSkillCsvImport: csvHandlers.handleSkillCSVImport,
       onSkillCsvExport: csvHandlers.handleSkillCSVExport,
       onSkillFormSubmit: formHandlers.handleSkillFormSubmit,
+    });
+  } else if (uiState.currentView === 'ranking' || uiState.currentView === 'optimizer') {
+    bindRankingView({
+      render,
+      getSelectedMorale: () => uiState.selectedMorale,
+      setSelectedMorale: (value) => setUiState({ selectedMorale: Number(value) || 100 }),
     });
   } else if (['unit', 'unitPart', 'abilityChip'].includes(uiState.currentView)) {
     bindUnitView({

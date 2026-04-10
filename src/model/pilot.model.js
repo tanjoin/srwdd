@@ -75,15 +75,27 @@ class Pilot {
     return this._sumSpecialSkill('mobility');
   }
 
-  get textEffectRateBonuses() {
+  getTextEffectRateBonuses(context = {}) {
+    const equippedNames = [
+      String(this.name || '').trim(),
+      ...(Array.isArray(context?.equippedNames) ? context.equippedNames : []),
+    ].filter(Boolean);
+    const equipmentContext = {
+      ...context,
+      equippedNames: [...new Set(equippedNames)],
+    };
     return this._getMatchedEquippedSkills().reduce((acc, skill) => {
-      const bonuses = SkillEffectParser.extractParameterRateBonuses(skill?.effect || '');
+      const bonuses = SkillEffectParser.extractParameterRateBonuses(skill?.effect || '', equipmentContext);
       acc.attack += bonuses.attack;
       acc.defense += bonuses.defense;
       acc.accuracy += bonuses.accuracy;
       acc.mobility += bonuses.mobility;
       return acc;
     }, SkillEffectParser.createEmptyBonusSet());
+  }
+
+  get textEffectRateBonuses() {
+    return this.getTextEffectRateBonuses();
   }
 
   get textEffectAttackRate() {

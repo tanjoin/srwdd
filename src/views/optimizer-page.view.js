@@ -1,4 +1,4 @@
-export function renderOptimizerPage({ optimizerRows = [] }) {
+export function renderOptimizerPage({ optimizerRows = [], selectedMorale = 100, selectedMoraleRate = 0, rankingMoraleValues = [] }) {
   const targetOrder = ['hp', 'attack', 'defense', 'accuracy', 'mobility', 'combatPower'];
   const groups = targetOrder
     .map((targetKey) => {
@@ -35,6 +35,18 @@ export function renderOptimizerPage({ optimizerRows = [] }) {
       ${optimizerRows.length === 0 ? `
         <div class="text-muted small">最適化対象の機体またはユニットパーツがありません。</div>
       ` : `
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+          <div>
+            <div class="small text-muted">気力${selectedMorale}を基準に最適構成を再計算</div>
+            <div class="small text-muted">気力補正: 100基準、10上昇ごとに攻撃力・防御力・照準値・運動性へ +3%（現在 +${selectedMoraleRate}%）</div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <label for="ranking-morale-select" class="small text-muted">気力</label>
+            <select id="ranking-morale-select" class="form-select form-select-sm">
+              ${rankingMoraleValues.map((morale) => `<option value="${morale}" ${Number(morale) === Number(selectedMorale) ? 'selected' : ''}>気力${morale}</option>`).join('')}
+            </select>
+          </div>
+        </div>
         <div class="small text-muted mb-2">MAIN と必殺技のみで、各ステータスが最も高くなる構成を表示</div>
         <div class="small text-muted mb-2">MAIN と必殺技に同じユニットパーツは使用しない</div>
         <div class="small text-muted mb-3">表示順: HP / 攻撃 / 防御 / 照準 / 運動 / 戦力値</div>
@@ -53,6 +65,7 @@ export function renderOptimizerPage({ optimizerRows = [] }) {
                     <th>必殺2</th>
                     <th>MAIN由来</th>
                     <th>必殺由来</th>
+                    <th>気力補正</th>
                     <th>効果率 攻</th>
                     <th>効果率 防</th>
                     <th>効果率 照</th>
@@ -77,6 +90,7 @@ export function renderOptimizerPage({ optimizerRows = [] }) {
                       <td>${row.finisherPart2Name || 'なし'}</td>
                       <td>${formatRateSummary(row, 'main')}</td>
                       <td>${formatRateSummary(row, 'finisher')}</td>
+                      <td>+${row.moraleRate}%</td>
                       <td>${row.textEffectAttackRate}%</td>
                       <td>${row.textEffectDefenseRate}%</td>
                       <td>${row.textEffectAccuracyRate}%</td>

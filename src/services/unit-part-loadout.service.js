@@ -1,11 +1,15 @@
 import SkillEffectParser from '../model/skill-effect-parser.model.js';
 
-export function evaluateUnitPartLoadout({ unit, pilot, main = null, finishers = [], subs = [] }) {
+export function evaluateUnitPartLoadout({ unit, pilot, main = null, finishers = [], subs = [], morale = 100 }) {
   const entries = buildLoadoutEntries({ main, finishers, subs });
   const statTotals = sumLoadoutStatTotals(entries);
-  const slotRateBonuses = extractLoadoutRateBonusesBySlot(entries);
+  const equipmentContext = buildEquipmentContext({ unit, pilot, entries, morale });
+  const slotRateBonuses = extractLoadoutRateBonusesBySlot(entries, equipmentContext);
+  const pilotRateBonuses = typeof pilot?.getTextEffectRateBonuses === 'function'
+    ? pilot.getTextEffectRateBonuses(equipmentContext)
+    : (pilot?.textEffectRateBonuses || SkillEffectParser.createEmptyBonusSet());
   const rateBonuses = mergeRateBonuses(
-    pilot?.textEffectRateBonuses || SkillEffectParser.createEmptyBonusSet(),
+    pilotRateBonuses,
     slotRateBonuses.main,
     slotRateBonuses.finisher,
     slotRateBonuses.sub,
@@ -43,7 +47,7 @@ export function evaluateUnitPartLoadout({ unit, pilot, main = null, finishers = 
     entries,
     statTotals,
     rateBonuses,
-    pilotRateBonuses: pilot?.textEffectRateBonuses || SkillEffectParser.createEmptyBonusSet(),
+    pilotRateBonuses,
     mainRateBonuses: slotRateBonuses.main,
     finisherRateBonuses: slotRateBonuses.finisher,
     subRateBonuses: slotRateBonuses.sub,
@@ -83,14 +87,14 @@ function sumLoadoutStatTotals(entries) {
   }, { hp: 0, attack: 0, defense: 0, accuracy: 0, mobility: 0 });
 }
 
-function extractLoadoutRateBonusesBySlot(entries) {
+function extractLoadoutRateBonusesBySlot(entries, equipmentContext) {
   return entries.reduce((acc, entry) => {
     const slot = entry.slot || {};
     const effectText = [
       String(slot.description || '').trim(),
       ...(Array.isArray(slot.effect) ? slot.effect.map((item) => String(item || '').trim()) : []),
     ].filter(Boolean).join('。');
-    const bonuses = SkillEffectParser.extractParameterRateBonuses(effectText);
+    const bonuses = SkillEffectParser.extractParameterRateBonuses(effectText, equipmentContext);
     const target = entry.slotKey === 'mainSlot'
       ? acc.main
       : entry.slotKey === 'finisherSlot'
@@ -106,6 +110,17 @@ function extractLoadoutRateBonusesBySlot(entries) {
     finisher: SkillEffectParser.createEmptyBonusSet(),
     sub: SkillEffectParser.createEmptyBonusSet(),
   });
+}
+
+function buildEquipmentContext({ unit, pilot, entries, morale = 100 }) {
+  return {
+    morale: Number(morale) || 100,
+    equippedNames: [
+      String(unit?.name || '').trim(),
+      String(pilot?.name || '').trim(),
+      ...entries.map((entry) => String(entry.part?.name || '').trim()),
+    ].filter(Boolean),
+  };
 }
 
 function mergeRateBonuses(...bonusSets) {

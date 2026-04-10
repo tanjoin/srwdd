@@ -1,5 +1,6 @@
 import { isFinisherSlotEligible, isMainSlotEligible, isPartCompatibleWithUnit } from './unit-part-slot.service.js';
 import { evaluateUnitPartLoadout, getTargetValue } from './unit-part-loadout.service.js';
+import { applyMoraleToTotals } from './morale.service.js';
 
 const OPTIMIZER_TARGETS = [
   { key: 'hp', label: 'HP最大' },
@@ -10,21 +11,22 @@ const OPTIMIZER_TARGETS = [
   { key: 'combatPower', label: '戦力値最大' },
 ];
 
-export function buildOptimizerRows({ units, pilotById, unitPartsList }) {
+export function buildOptimizerRows({ units, pilotById, unitPartsList, selectedMorale = 100 }) {
   return units.flatMap((unit) => {
     const pilot = pilotById.get(String(unit.pilotId));
     if (!pilot) return [];
 
     const compatibleParts = unitPartsList.filter((part) => isPartCompatibleWithUnit(part, unit.id, pilot.id));
 
-    return OPTIMIZER_TARGETS.map((target) => buildOptimizerRow(unit, pilot, compatibleParts, target));
+    return OPTIMIZER_TARGETS.map((target) => buildOptimizerRow(unit, pilot, compatibleParts, target, selectedMorale));
   });
 }
 
-function buildOptimizerRow(unit, pilot, parts, target) {
-  const main = pickBestMain(parts.filter(isMainSlotEligible), unit, pilot, target.key);
-  const finishers = pickBestFinishers(excludeUsed(parts.filter(isFinisherSlotEligible), [main]), unit, pilot, target.key, main);
-  const totals = evaluateUnitPartLoadout({ unit, pilot, main, finishers, subs: [] });
+function buildOptimizerRow(unit, pilot, parts, target, selectedMorale) {
+  const main = pickBestMain(parts.filter(isMainSlotEligible), unit, pilot, target.key, selectedMorale);
+  const finishers = pickBestFinishers(excludeUsed(parts.filter(isFinisherSlotEligible), [main]), unit, pilot, target.key, main, selectedMorale);
+  const baseTotals = evaluateUnitPartLoadout({ unit, pilot, main, finishers, subs: [], morale: selectedMorale });
+  const totals = applyMoraleToTotals(baseTotals, selectedMorale);
 
   return {
     unitId: String(unit.id || ''),
@@ -39,6 +41,8 @@ function buildOptimizerRow(unit, pilot, parts, target) {
     finisherPartNames: finishers.map((part) => formatPartName(part, 'finisherSlot')).filter(Boolean).join(', '),
     finisherPartDisplays: finishers.map((part) => formatPartName(part, 'finisherSlot')).filter(Boolean),
     finisherCount: finishers.length,
+    morale: totals.morale,
+    moraleRate: totals.moraleRate,
     textEffectAttackRate: totals.rateBonuses.attack,
     textEffectDefenseRate: totals.rateBonuses.defense,
     textEffectAccuracyRate: totals.rateBonuses.accuracy,
@@ -61,19 +65,31 @@ function buildOptimizerRow(unit, pilot, parts, target) {
   };
 }
 
-function pickBestMain(parts, unit, pilot, targetKey) {
+function pickBestMain(parts, unit, pilot, targetKey, selectedMorale) {
   return [...parts].sort((left, right) => {
-    const rightValue = getTargetValue(evaluateUnitPartLoadout({ unit, pilot, main: right, finishers: [], subs: [] }), targetKey);
-    const leftValue = getTargetValue(evaluateUnitPartLoadout({ unit, pilot, main: left, finishers: [], subs: [] }), targetKey);
+    const rightValue = getTargetValue(applyMoraleToTotals(
+      evaluateUnitPartLoadout({ unit, pilot, main: right, finishers: [], subs: [], morale: selectedMorale }),
+      selectedMorale,
+    ), targetKey);
+    const leftValue = getTargetValue(applyMoraleToTotals(
+      evaluateUnitPartLoadout({ unit, pilot, main: left, finishers: [], subs: [], morale: selectedMorale }),
+      selectedMorale,
+    ), targetKey);
     return rightValue - leftValue;
   })[0] || null;
 }
 
-function pickBestFinishers(parts, unit, pilot, targetKey, main) {
+function pickBestFinishers(parts, unit, pilot, targetKey, main, selectedMorale) {
   return chooseUpToCombinations(parts, 2)
     .sort((left, right) => {
-      const rightValue = getTargetValue(evaluateUnitPartLoadout({ unit, pilot, main, finishers: right, subs: [] }), targetKey);
-      const leftValue = getTargetValue(evaluateUnitPartLoadout({ unit, pilot, main, finishers: left, subs: [] }), targetKey);
+      const rightValue = getTargetValue(applyMoraleToTotals(
+        evaluateUnitPartLoadout({ unit, pilot, main, finishers: right, subs: [], morale: selectedMorale }),
+        selectedMorale,
+      ), targetKey);
+      const leftValue = getTargetValue(applyMoraleToTotals(
+        evaluateUnitPartLoadout({ unit, pilot, main, finishers: left, subs: [], morale: selectedMorale }),
+        selectedMorale,
+      ), targetKey);
       if (rightValue !== leftValue) return rightValue - leftValue;
       return right.length - left.length;
     })[0] || [];

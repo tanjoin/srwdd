@@ -1,4 +1,4 @@
-export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] }) {
+export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [], selectedMorale = 100, selectedMoraleRate = 0, rankingMoraleValues = [] }) {
   const topCombinationKeys = new Set();
   scoredRankingRows.forEach((row) => {
     const key = `${row.unitId || row.unitName}::${row.pilotName || ''}`;
@@ -10,7 +10,18 @@ export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] 
   return `
     <div class="card border-0 shadow-sm rounded-4 mb-4">
       <div class="card-header bg-transparent border-0 pt-3">
-        <h2 class="h6 mb-0">重み付きランキング（機体+パイロット+適合ユニットパーツ）</h2>
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-2">
+          <div>
+            <h2 class="h6 mb-0">重み付きランキング（機体+パイロット+適合ユニットパーツ）</h2>
+            <div class="small text-muted mt-1">気力${selectedMorale}を基準にランキングを再計算</div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <label for="ranking-morale-select" class="small text-muted">気力</label>
+            <select id="ranking-morale-select" class="form-select form-select-sm">
+              ${rankingMoraleValues.map((morale) => `<option value="${morale}" ${Number(morale) === Number(selectedMorale) ? 'selected' : ''}>気力${morale}</option>`).join('')}
+            </select>
+          </div>
+        </div>
       </div>
       <div class="card-body">
       ${scoredRankingRows.length === 0 ? `
@@ -20,6 +31,7 @@ export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] 
       <div class="small text-muted mb-2">ユニットパーツは適合機体・適合パイロットが一致するものだけで MAIN と必殺のみ組み合わせを生成</div>
       <div class="small text-muted mb-2">SUB は現状ランキング対象外</div>
       <div class="small text-muted mb-2">攻撃力・防御力・照準値・運動性は、機体+パイロット+ユニットパーツ合算後に装備スキルのテキスト効果を反映</div>
+      <div class="small text-muted mb-2">気力補正: 100基準、10上昇ごとに攻撃力・防御力・照準値・運動性へ +3%（現在 +${selectedMoraleRate}%）</div>
       <div class="small text-muted mb-2">戦力値: 基礎HP/9 + パーツ増加HP×2/3 + 攻撃力 + 防御力 + 照準値×10 + 運動性×10</div>
       <div class="small text-muted mb-3">総組み合わせ数: ${scoredRankingRows.length}</div>
       <div class="card bg-light border-0 rounded-4 mb-3">
@@ -37,6 +49,7 @@ export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] 
                   <th>必殺2</th>
                   <th>MAIN由来</th>
                   <th>必殺由来</th>
+                  <th>気力補正</th>
                   <th>効果率 攻</th>
                   <th>効果率 防</th>
                   <th>効果率 照</th>
@@ -56,6 +69,7 @@ export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] 
                     <td>${row.finisherPart2Name || 'なし'}</td>
                     <td>${formatRateSummary(row, 'main')}</td>
                     <td>${formatRateSummary(row, 'finisher')}</td>
+                    <td>+${row.moraleRate}%</td>
                     <td>${row.textEffectAttackRate}%</td>
                     <td>${row.textEffectDefenseRate}%</td>
                     <td>${row.textEffectAccuracyRate}%</td>
@@ -81,6 +95,7 @@ export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] 
             <th data-sort="finisherPart2Name" class="sortable">必殺2</th>
             <th>MAIN由来</th>
             <th>必殺由来</th>
+            <th data-sort="moraleRate" class="sortable">気力補正</th>
             <th data-sort="textEffectAttackRate" class="sortable">効果率 攻</th>
             <th data-sort="textEffectDefenseRate" class="sortable">効果率 防</th>
             <th data-sort="textEffectAccuracyRate" class="sortable">効果率 照</th>
@@ -106,7 +121,7 @@ export function renderRankingPage({ scoredRankingRows, bestUnitRankingRows = [] 
               }
               return `
             <tr>
-              <td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${idx + 1}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.unitName}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.pilotName}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.mainPartName}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.finisherPart1Name || 'なし'}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.finisherPart2Name || 'なし'}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${formatRateSummary(row, 'main')}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${formatRateSummary(row, 'finisher')}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectAttackRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectDefenseRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectAccuracyRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectMobilityRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.hp}</td>
+              <td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${idx + 1}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.unitName}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.pilotName}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.mainPartName}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.finisherPart1Name || 'なし'}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.finisherPart2Name || 'なし'}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${formatRateSummary(row, 'main')}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${formatRateSummary(row, 'finisher')}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">+${row.moraleRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectAttackRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectDefenseRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectAccuracyRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.textEffectMobilityRate}%</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.hp}</td>
               <td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.attack}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.defense}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.accuracy}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.mobility}</td>
               <td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.movement}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.speed}</td><td class="${isTopCombinationRow ? 'fw-semibold' : ''}">${row.combatPower}</td><td class="fw-semibold ${isTopCombinationRow ? 'text-decoration-underline' : ''}">${row.score}</td>
             </tr>

@@ -1,7 +1,8 @@
 import { isFinisherSlotEligible, isMainSlotEligible, isPartCompatibleWithUnit } from './unit-part-slot.service.js';
+import { applyMoraleToTotals } from './morale.service.js';
 import { evaluateUnitPartLoadout } from './unit-part-loadout.service.js';
 
-export function buildRankingRows({ units, pilotById, unitPartsList }) {
+export function buildRankingRows({ units, pilotById, unitPartsList, selectedMorale = 100 }) {
   return units.flatMap((u) => {
     const pilot = pilotById.get(String(u.pilotId));
     if (!pilot) return [];
@@ -10,12 +11,13 @@ export function buildRankingRows({ units, pilotById, unitPartsList }) {
 
     const combinations = buildRankingPartLoadoutCombinations(compatibleParts);
 
-    return combinations.map((loadout) => buildRankingRow(u, pilot, loadout));
+    return combinations.map((loadout) => buildRankingRow(u, pilot, loadout, selectedMorale));
   });
 }
 
-function buildRankingRow(unit, pilot, loadout) {
-  const totals = evaluateUnitPartLoadout({ unit, pilot, main: loadout.main, finishers: loadout.finishers, subs: [] });
+function buildRankingRow(unit, pilot, loadout, selectedMorale) {
+  const baseTotals = evaluateUnitPartLoadout({ unit, pilot, main: loadout.main, finishers: loadout.finishers, subs: [], morale: selectedMorale });
+  const totals = applyMoraleToTotals(baseTotals, selectedMorale);
   const movement = Number(unit.movement) || 0;
   const speed = Number(unit.speed) || 0;
 
@@ -29,6 +31,8 @@ function buildRankingRow(unit, pilot, loadout) {
     finisherPartNames: loadout.finishers.map((part) => formatPartName(part, 'finisherSlot')).filter(Boolean).join(', '),
     finisherCount: loadout.finishers.length,
     combinationSize: loadout.parts.length,
+    morale: totals.morale,
+    moraleRate: totals.moraleRate,
     hp: totals.hp,
     baseHp: totals.baseHp,
     partsIncreaseHp: totals.partsIncreaseHp,

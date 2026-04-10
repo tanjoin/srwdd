@@ -1,4 +1,5 @@
 import { buildBestUnitRankingRows, buildScoredRankingRows, buildUnitPartOptimizerRows } from './ranking.service.js';
+import { MORALE_VALUES, getMoraleRate } from './morale.service.js';
 
 export function buildRenderViewModel({
   state,
@@ -53,15 +54,17 @@ export function buildRenderViewModel({
   const unitById = new Map(units.map(u => [String(u.id), u]));
   const unitPartById = new Map(unitPartsList.map(item => [String(item.id), item]));
   const abilityChipById = new Map(abilityChips.map(item => [String(item.id), item]));
+  const selectedMorale = uiState.selectedMorale || 100;
   const scoredRankingRows = buildScoredRankingRows({
     units,
     pilotById,
     unitPartsList,
     rankingSort: sortState.ranking,
     compareValues,
+    selectedMorale,
   });
   const bestUnitRankingRows = buildBestUnitRankingRows(scoredRankingRows);
-  const optimizerRows = buildUnitPartOptimizerRows({ units, pilotById, unitPartsList });
+  const optimizerRows = buildUnitPartOptimizerRows({ units, pilotById, unitPartsList, selectedMorale });
 
   const selectedUnit = units.find(u => String(u.id) === String(uiState.selectedUnitId));
   const editingUnit = uiState.currentView === 'unit'
@@ -106,6 +109,9 @@ export function buildRenderViewModel({
     unitPartsList,
     abilityChips,
     selectedUnit,
+    selectedMorale,
+    selectedMoraleRate: getMoraleRate(selectedMorale),
+    rankingMoraleValues: MORALE_VALUES,
     selectedUnitPilotId: selectedUnit?.pilotId || '',
     selectedUnitLoadout: selectedUnit?.loadout || {},
     editingUnit,
